@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk – Soft Tabs + Watson & Head Data
+# 🌸 Diversification of Risk – Soft Tabs + Compact Output Line
 # ============================================================
 
 import streamlit as st
@@ -75,7 +75,6 @@ div[data-baseweb="slider"] > div {
 .stButton > button:hover {
     background-color: #CC5B5B !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -89,18 +88,18 @@ def tab_body(html=""):
     st.markdown(f"<div class='tab-card'>{html}</div>", unsafe_allow_html=True)
 
 # ============================================================
-# 2 COLUMN LAYOUT
+# LAYOUT (INPUT —> OUTPUT)
 # ============================================================
 left, right = st.columns([1, 2])
 
 # ============================================================
-# LEFT COLUMN (INPUTS)
+# LEFT SIDE — INPUT
 # ============================================================
 with left:
 
     soft_tab("Input Data (X & Y Returns)", "📥")
 
-    # Watson & Head 8th Edition Default (Editable Table)
+    # Watson & Head default dataset (editable)
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
         "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
@@ -109,58 +108,48 @@ with left:
     df = st.data_editor(default_df, use_container_width=True)
 
     if df.isnull().any().any():
-        st.warning("⚠ Please enter 5 percentage values for BOTH X and Y.")
+        st.warning("⚠ Please enter 5 numeric percentage values for BOTH X and Y.")
         st.stop()
 
-    # Convert % → decimals for calculation
+    # Convert % to decimals for calculations
     df = df.astype(float) / 100
 
     # Portfolio weight slider
     weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
-    # Red Calculate Button
+    # Button
     calculate = st.button("Calculate")
 
 # ============================================================
-# RIGHT COLUMN (RESULTS)
+# RIGHT SIDE — OUTPUT
 # ============================================================
 if calculate:
 
-    # Summary statistics
-    mean_x, mean_y = df.mean()
-    sd_x, sd_y = df.std(ddof=0)
-    corr = df["X"].corr(df["Y"])
+    mean_x, mean_y = df.mean()               # Means
+    sd_x, sd_y = df.std(ddof=0)              # SDs
+    corr = df["X"].corr(df["Y"])             # Correlation
 
-    # Portfolio return and risk
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
     with right:
-        # Soft Tab Header
         soft_tab("Efficient Frontier", "📈")
 
-        # STATISTICS + ALGEBRA BOX
+        # --------------------------------------------------------
+        # 🔎 COMPACT ONE-LINE OUTPUT (Academic Format)
+        # --------------------------------------------------------
         tab_body(f"""
-### 📌 Correlation
-\( r = {corr:.2f} \)
-
-### 📊 Mean Returns
-\( \\bar{{X}} = {mean_x*100:.2f}\\% \quad ; \quad \\bar{{Y}} = {mean_y*100:.2f}\\% \)
-
-### 📉 Risk (Standard Deviation)
-\( \\sigma_X = {sd_x*100:.2f}\\% \quad ; \quad \\sigma_Y = {sd_y*100:.2f}\\% \)
-
-### 💼 Portfolio Expected Return
-\( E(R_p) = w_X\\bar{{X}} + w_Y\\bar{{Y}} \)\
-👉 **{port_return*100:.2f}%**
-
-### ⚠️ Portfolio Risk
-\( \\sigma_p = \\sqrt{{ w_X^2\\sigma_X^2 + w_Y^2\\sigma_Y^2 + 2w_Xw_Y\\sigma_X\\sigma_Yr }} \)\
-👉 **{port_sd*100:.2f}%**
-        """)
+**r =** \( {corr:.2f} \) | 
+**\( \\bar{{X}} \)=** \( {mean_x*100:.2f}\\% \) 
+**\( \\bar{{Y}} \)=** \( {mean_y*100:.2f}\\% \) | 
+**\( \\sigma_X \)=** \( {sd_x*100:.2f}\\% \) 
+**\( \\sigma_Y \)=** \( {sd_y*100:.2f}\\% \) | 
+**\( E(R_p) \)=** \( {port_return*100:.2f}\\% \) | 
+**\( \\sigma_p \)=** \( {port_sd*100:.2f}\\% \)
+""")
 
         # ============================================================
         # EFFICIENT FRONTIER GRAPH
@@ -182,4 +171,3 @@ if calculate:
 # ============================================================
 # END OF APP
 # ============================================================
-
