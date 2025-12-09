@@ -1,5 +1,6 @@
+
 # ============================================================
-# 🌸 Diversification of Risk – Pastel Light Theme (Streamlit)
+# 🌸 Diversification of Risk – Pastel Light Theme (X–Y + Calculate Button)
 # ============================================================
 
 import streamlit as st
@@ -47,7 +48,7 @@ h1,h2,h3,h4,p,div, label, span {
 
 /* ===== CARD HEADER ===== */
 .card-header {
-  background-color: #E8F3FF;             /* Pastel sky blue */
+  background-color: #E8F3FF;
   padding: 10px 14px;
   font-weight: 600;
   font-size: 18px;
@@ -66,13 +67,12 @@ h1,h2,h3,h4,p,div, label, span {
 
 /* ===== RADIO BUTTONS ===== */
 .stRadio > div { gap: 4px; }
-.stRadio label { color: #36454F !important; font-weight:500; }
+.stRadio label { color: #36454F !important; }
 
-/* ===== SLIDER TRACK COLOR ===== */
+/* ===== SLIDER ===== */
 div[data-baseweb="slider"] > div {
-    background-color: #82C7A5 !important;   /* Pastel mint */
+    background-color: #82C7A5 !important;
 }
-.stSlider label {color:#36454F !important;}
 
 /* ===== TABLE ===== */
 [data-testid="stTable"], .stDataFrame iframe {
@@ -81,15 +81,19 @@ div[data-baseweb="slider"] > div {
     border-radius: 8px;
 }
 
-/* ===== SUCCESS/WARNING MESSAGES ===== */
-.stSuccess {
-    background-color:#EAF8F1 !important;
-    border-left:4px solid #85D4B7 !important;
+/* ===== BUTTON ===== */
+.stButton > button {
+    background-color: #82C7A5;
+    color: #36454F;
+    border-radius: 8px;
+    font-weight: 600;
+    border: 1px solid #6EB695;
 }
-.stWarning {
-    background-color:#FFF7E6 !important;
-    border-left:4px solid #F2C76E !important;
+.stButton > button:hover {
+    background-color: #6EB695;
+    color: white;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -107,18 +111,17 @@ def card(title, icon, content=""):
 # ============================================================
 # GRID LAYOUT (3 Columns)
 # ============================================================
-col1, col2, col3 = st.columns([1.3, 1, 1.4])
-
+left, middle, right = st.columns([1.2, 1, 1.4])
 
 # ─────────────────────────────────────────────────────────────
-# COLUMN 1 → DATA ENTRY
+# LEFT COLUMN → INPUT + CALCULATE BUTTON
 # ─────────────────────────────────────────────────────────────
-with col1:
+with left:
     card("Input Data", "📥")
 
     default_df = pd.DataFrame({
-        "S": [6.6, 5.6, -9.0, 12.6, 14.0],
-        "T": [24.5, -5.9, 19.9, -7.8, 14.8]
+        "X": [6.6, 5.6, -9.0, 12.6, 14.0],
+        "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
     })
 
     mode = st.radio("", ["Use Watson & Head", "Enter My Own"], label_visibility="collapsed")
@@ -127,62 +130,68 @@ with col1:
         df = default_df.copy()
         st.dataframe(df, use_container_width=True, height=160)
     else:
-        df = st.data_editor(pd.DataFrame({"S":[None]*5, "T":[None]*5}),
+        df = st.data_editor(pd.DataFrame({"X":[None]*5, "Y":[None]*5}),
                              num_rows="fixed", use_container_width=True)
 
     if df.isnull().any().any():
-        st.warning("⚠ Please enter 5 values for BOTH S and T.")
+        st.warning("⚠ Please enter 5 values for BOTH X and Y.")
         st.stop()
 
-    df = df.astype(float) / 100    # Convert to decimals
+    # Convert % to decimals for calculations
+    df = df.astype(float) / 100
 
-    mean_s, mean_t = df.mean()
-    sd_s, sd_t = df.std(ddof=0)
-    corr = df["S"].corr(df["T"])
+    # Weight slider at bottom
+    weight_x = st.slider("Weight in Asset X", 0.0, 1.0, 0.5, 0.05)
+    weight_y = 1 - weight_x
+
+    # Calculate button
+    go = st.button("Calculate")
 
 
-# ─────────────────────────────────────────────────────────────
-# COLUMN 2 → CORRELATION + WEIGHTS
-# ─────────────────────────────────────────────────────────────
-with col2:
-    card("Correlation Analysis", "🔗", f"<b>Correlation (r):</b> {corr:.2f}")
+# ============================================================
+# ONLY SHOW RESULTS IF BUTTON IS CLICKED
+# ============================================================
+if go:
 
-    weight_s = st.slider("Weight in Asset S", 0.0, 1.0, 0.5, 0.05)
-    weight_t = 1-weight_s
-    card("Portfolio Weights", "⚖️", f"S = {weight_s:.2f}, T = {weight_t:.2f}")
+    # Compute stats
+    mean_x, mean_y = df.mean()
+    sd_x, sd_y = df.std(ddof=0)
+    corr = df["X"].corr(df["Y"])
 
-    port_return = weight_s * mean_s + weight_t * mean_t
-    port_var = (weight_s**2 * sd_s**2) + (weight_t**2 * sd_t**2) + \
-               (2 * weight_s * weight_t * sd_s * sd_t * corr)
+    port_return = weight_x * mean_x + weight_y * mean_y
+    port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) + \
+               (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
+    # === MIDDLE COLUMN ===
+    with middle:
+        card("Correlation Analysis", "🔗",
+             f"<b>Correlation (r):</b> {corr:.2f}")
 
-# ─────────────────────────────────────────────────────────────
-# COLUMN 3 → GRAPH + RESULT
-# ─────────────────────────────────────────────────────────────
-with col3:
-    card("Efficient Frontier", "📈")
+    # === RIGHT COLUMN ===
+    with right:
+        card("Efficient Frontier", "📈")
 
-    w = np.linspace(0, 1, 50)
-    pf_returns = w * mean_s + (1-w) * mean_t
-    pf_sd = np.sqrt(w**2*sd_s**2 + (1-w)**2*sd_t**2 + 2*w*(1-w)*sd_s*sd_t*corr)
+        # Efficient frontier
+        w = np.linspace(0, 1, 50)
+        pf_returns = w * mean_x + (1-w) * mean_y
+        pf_sd = np.sqrt(w**2*sd_x**2 + (1-w)**2*sd_y**2 + 2*w*(1-w)*sd_x*sd_y*corr)
 
-    plt.style.use("seaborn-v0_8-whitegrid")
-    fig, ax = plt.subplots(figsize=(6,4))
+        plt.style.use("seaborn-v0_8-whitegrid")
+        fig, ax = plt.subplots(figsize=(6,4))
+        ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
+        ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=60, label="Current Portfolio")
 
-    ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
-    ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=60, label="Current Portfolio")
+        ax.set_facecolor("#FFFFFF")
+        ax.set_xlabel("Risk (Std Dev %)")
+        ax.set_ylabel("Expected Return (%)")
+        ax.legend()
+        st.pyplot(fig)
 
-    ax.set_facecolor("#FFFFFF")
-    ax.set_xlabel("Risk (Std Dev %)")
-    ax.set_ylabel("Expected Return (%)")
-    ax.legend()
-    st.pyplot(fig)
-
-    min_risk = min(pf_sd) * 100
-    card("Diversification Benefit", "📉",
-         f"<b>Minimum achievable risk:</b> {min_risk:.2f}%<br>"
-         f"(S = {sd_s*100:.2f}%, T = {sd_t*100:.2f}%)")
+        min_risk = min(pf_sd) * 100
+        card("Diversification Benefit", "📉",
+             f"<b>Minimum achievable risk:</b> {min_risk:.2f}%<br>"
+             f"(X = {sd_x*100:.2f}%, Y = {sd_y*100:.2f}%)")
 
 # ============================================================
 # END OF APP
