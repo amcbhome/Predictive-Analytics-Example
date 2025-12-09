@@ -2,124 +2,106 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Portfolio Diversification Visualiser", layout="wide")
+st.set_page_config(page_title="Efficient Frontier Portfolio App", layout="wide")
 
-# ---------- PAGE STYLING ----------
-st.markdown("""
-<style>
-[data-testid="stNumberInput"] > div {
-    padding-top: 0rem !important;
-    padding-bottom: 0rem !important;
-}
-.st-emotion-cache-16idsys p {
-    margin-bottom: -10px !important;
-}
-th, td {
-    text-align: center !important;
-}
-</style>
-""", unsafe_allow_html=True)
+# -----------------------------  SIDEBAR INPUTS  --------------------------------
+st.sidebar.title("🔧 Portfolio Inputs")
 
-# ================================
-#        HEADER (3 COLUMNS)
-# ================================
-colA, colB, colC = st.columns([1, 4, 1])
+st.sidebar.markdown("### 📈 Asset X Daily Returns (5 values)")
+x1 = st.sidebar.number_input("X1", value=5.0, step=0.1, format="%.2f")
+x2 = st.sidebar.number_input("X2", value=7.0, step=0.1, format="%.2f")
+x3 = st.sidebar.number_input("X3", value=8.0, step=0.1, format="%.2f")
+x4 = st.sidebar.number_input("X4", value=9.0, step=0.1, format="%.2f")
+x5 = st.sidebar.number_input("X5", value=12.0, step=0.1, format="%.2f")
 
-with colA:
-    st.image(
-        "https://cdn-icons-png.flaticon.com/512/2331/2331944.png",
-        width=80
-    )
+st.sidebar.markdown("### 📉 Asset Y Daily Returns (5 values)")
+y1 = st.sidebar.number_input("Y1", value=6.0, step=0.1, format="%.2f")
+y2 = st.sidebar.number_input("Y2", value=8.0, step=0.1, format="%.2f")
+y3 = st.sidebar.number_input("Y3", value=9.0, step=0.1, format="%.2f")
+y4 = st.sidebar.number_input("Y4", value=11.0, step=0.1, format="%.2f")
+y5 = st.sidebar.number_input("Y5", value=15.0, step=0.1, format="%.2f")
 
-with colB:
-    st.markdown(
-        "<h1 style='text-align: center;'>Portfolio Diversification Visualiser</h1>",
-        unsafe_allow_html=True
-    )
+st.sidebar.markdown("---")
+st.sidebar.markdown("### ⚖️ Portfolio Weights (Must total 100%)")
 
-with colC:
-    st.write("")
+wx = st.sidebar.number_input("Weight of X (%)", value=50.0, min_value=0.0, max_value=100.0, step=1.0)
+wy = st.sidebar.number_input("Weight of Y (%)", value=50.0, min_value=0.0, max_value=100.0, step=1.0)
 
-# ================================
-#         INPUT TRAY (EXPANDER)
-# ================================
-with st.expander("🔢 Input Asset Data (Click to Expand)"):
-    
-    col1, col2 = st.columns(2)
-
-    # ---- 5 input rows for asset X ----
-    with col1:
-        st.markdown("**Asset X Values**")
-        x1 = st.number_input("X1", value=5.0, step=0.1, format="%.2f")
-        x2 = st.number_input("X2", value=7.0, step=0.1, format="%.2f")
-        x3 = st.number_input("X3", value=8.0, step=0.1, format="%.2f")
-        x4 = st.number_input("X4", value=9.0, step=0.1, format="%.2f")
-        x5 = st.number_input("X5", value=12.0, step=0.1, format="%.2f")
-
-    # ---- 5 input rows for asset Y ----
-    with col2:
-        st.markdown("**Asset Y Values**")
-        y1 = st.number_input("Y1", value=6.0, step=0.1, format="%.2f")
-        y2 = st.number_input("Y2", value=8.0, step=0.1, format="%.2f")
-        y3 = st.number_input("Y3", value=9.0, step=0.1, format="%.2f")
-        y4 = st.number_input("Y4", value=11.0, step=0.1, format="%.2f")
-        y5 = st.number_input("Y5", value=15.0, step=0.1, format="%.2f")
-
-    # ---- Weight inputs that must sum to 100 ----
-    st.markdown("---")
-    st.markdown("### ⚖️ Portfolio Weights (Must sum to 100%)")
-
-    weight_col1, weight_col2 = st.columns(2)
-    with weight_col1:
-        weight_x = st.number_input("Weight of X (%)", value=50.0, min_value=0.0, max_value=100.0, step=1.0)
-
-    with weight_col2:
-        weight_y = st.number_input("Weight of Y (%)", value=50.0, min_value=0.0, max_value=100.0, step=1.0)
-
-# ---------- Convert to numpy arrays ----------
+# -------------------------- DATA CONVERSION -------------------------------------
 x_values = np.array([x1, x2, x3, x4, x5])
 y_values = np.array([y1, y2, y3, y4, y5])
 
-# ================================
-#     CALCULATE AND GRAPH
-# ================================
-if st.button("Calculate Portfolio Curve"):
+# -------------------------- EF2 MATHEMATICS -------------------------------------
+def portfolio_return(w, r1, r2):
+    return w * r1 + (1 - w) * r2
 
-    if weight_x + weight_y != 100:
-        st.error("❌ The weights must sum to **100%**. Please adjust X% and Y%.")
+def portfolio_risk(w, sd1, sd2, corr):
+    cov = corr * sd1 * sd2
+    return np.sqrt(w**2 * sd1**2 + (1 - w)**2 * sd2**2 + 2 * w * (1 - w) * cov)
+
+# ---------------------- CALCULATE BUTTON ----------------------------------------
+if st.sidebar.button("Calculate Efficient Frontier"):
+
+    if wx + wy != 100:
+        st.error("❌ The weights must sum to **100%**.")
     else:
-        st.subheader("📈 Risk & Return Relationship Curve")
+        # Convert user weights to decimals
+        w_user = wx / 100
 
-        # Convert weights to decimals
-        wx = weight_x / 100
-        wy = weight_y / 100
+        # Statistics
+        mean_x = x_values.mean()
+        mean_y = y_values.mean()
+        sd_x = x_values.std(ddof=1)
+        sd_y = y_values.std(ddof=1)
+        corr_xy = np.corrcoef(x_values, y_values)[0][1]
 
-        # Weighted return
-        weighted_return = wx * x_values.mean() + wy * y_values.mean()
+        # Weight range for frontier
+        W = np.linspace(0, 1, 100)
 
-        # x-axis is weights of X from 0 to 1
-        weights = np.linspace(0, 1, 100)
-        portfolio = weights * x_values.mean() + (1 - weights) * y_values.mean()
+        # Efficient Frontier
+        ef_returns = portfolio_return(W, mean_x, mean_y)
+        ef_risk = portfolio_risk(W, sd_x, sd_y, corr_xy)
 
-        # ---- Matplotlib plot ----
+        # User portfolio point
+        user_return = portfolio_return(w_user, mean_x, mean_y)
+        user_risk = portfolio_risk(w_user, sd_x, sd_y, corr_xy)
+
+        # -------------------------- MAIN CHART ---------------------------------
+        st.markdown("## 📈 Efficient Frontier (True Portfolio Risk & Return)")
         fig, ax = plt.subplots(figsize=(8, 4.5))
 
-        ax.plot(weights, portfolio, linewidth=2)
-        ax.scatter([1], [x_values.mean()], color='blue')
-        ax.scatter([0], [y_values.mean()], color='red')
-        ax.scatter([wx], [weighted_return], color='green', s=80)
+        # Frontier line
+        ax.plot(ef_risk, ef_returns, linewidth=2, label="Efficient Frontier")
 
-        ax.text(1, x_values.mean(), "X", fontsize=10, ha='center', va='bottom')
-        ax.text(0, y_values.mean(), "Y", fontsize=10, ha='center', va='bottom')
-        ax.text(wx, weighted_return, "Your Mix", fontsize=10, ha='left', va='bottom', color='green')
+        # User selected point
+        ax.scatter(user_risk, user_return, color='green', s=80, label="Your Portfolio")
+        ax.text(user_risk, user_return, f"  (You)", fontsize=9, color='green', va='center')
 
-        ax.set_xlabel("Weight of X")
+        # Individual assets
+        ax.scatter(sd_x, mean_x, color='blue', s=80, label="Asset X")
+        ax.text(sd_x, mean_x, f" X", fontsize=9, color='blue')
+        ax.scatter(sd_y, mean_y, color='red', s=80, label="Asset Y")
+        ax.text(sd_y, mean_y, f" Y", fontsize=9, color='red')
+
+        # Labels & Grid
+        ax.set_xlabel("Risk (Standard Deviation)")
         ax.set_ylabel("Return")
-        ax.set_ylim(5, None)
-        ax.set_xlim(0, 1)
-
         ax.grid(True, linestyle="--", alpha=0.5)
+        ax.legend()
+
         st.pyplot(fig)
 
+        # ------------------- Numerical Summary -----------------------
+        st.markdown("---")
+        st.markdown("### 📌 Portfolio Metrics Summary")
+        st.write(f"**Mean Return X:** {mean_x:.2f}")
+        st.write(f"**Mean Return Y:** {mean_y:.2f}")
+        st.write(f"**Std Dev X:** {sd_x:.4f}")
+        st.write(f"**Std Dev Y:** {sd_y:.4f}")
+        st.write(f"**Correlation (X,Y):** {corr_xy:.4f}")
+        st.write(f"**Your Portfolio Expected Return:** {user_return:.2f}")
+        st.write(f"**Your Portfolio Risk (Std Dev):** {user_risk:.4f}")
+
 else:
-    st.info("Press **Calculate Portfolio Curve** to display the graph.")
+    st.info("Set values and press **Calculate Efficient Frontier** from the sidebar.")
+
