@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk – Pastel Light Theme (Streamlined)
+# 🌸 Diversification of Risk – Pastel Light Theme (Clean Final)
 # ============================================================
 
 import streamlit as st
@@ -20,18 +20,18 @@ st.markdown("""
 '>📊 Diversification of Risk Dashboard</h1>
 """, unsafe_allow_html=True)
 
-# ======== PASTEL THEME STYLING ==========
+# ======== PASTEL LIGHT THEME STYLE ==========
 st.markdown("""
 <style>
 
 /* ===== BACKGROUND ===== */
 body, .block-container {
     background-color: #FAFAFA;
-    color: #333333;
     font-family: 'Segoe UI', sans-serif;
+    color: #36454F;
 }
 
-/* ===== CARD CONTAINERS ===== */
+/* ===== CARD STYLING ===== */
 .card {
   border: 1.3px solid #D8DEE3;
   border-radius: 12px;
@@ -39,8 +39,6 @@ body, .block-container {
   margin-bottom: 18px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-
-/* ===== CARD HEADER ===== */
 .card-header {
   background-color: #E8F3FF;
   padding: 10px 14px;
@@ -51,23 +49,27 @@ body, .block-container {
   border-top-right-radius: 10px;
   color: #336699 !important;
 }
-
-/* ===== CARD BODY ===== */
 .card-body {
   padding: 12px 16px;
   font-size: 15px;
   color:#36454F !important;
 }
 
-/* Remove background tint from slider */
+/* ===== RADIO BUTTONS ===== */
+.stRadio > div { gap: 4px; }
+.stRadio label { color: #36454F !important; }
+
+/* ===== SLIDER (NO BACKGROUND) ===== */
 div[data-baseweb="slider"] > div {
     background-color: transparent !important;
 }
+.stSlider label {color:#36454F !important;}
 
-/* Data table full width */
-.dataframe-container {
-    width: 100% !important;
-    overflow-x: auto !important;
+/* ===== TABLE (NO SCROLL) ===== */
+[data-testid="stTable"], .stDataFrame iframe {
+    background-color: #FFFFFF !important;
+    color: #36454F !important;
+    border-radius: 8px;
 }
 
 /* ===== RED CALCULATE BUTTON ===== */
@@ -85,26 +87,25 @@ div[data-baseweb="slider"] > div {
 </style>
 """, unsafe_allow_html=True)
 
-
 # ======== CARD FUNCTION ==========
 def card(title, icon, content=""):
-    return st.markdown(f"""
+    st.markdown(f"""
     <div class="card">
         <div class="card-header">{icon} {title}</div>
         <div class="card-body">{content}</div>
     </div>
     """, unsafe_allow_html=True)
 
-
 # ============================================================
-# 2-COLUMN LAYOUT
+# 2-COLUMN LAYOUT (Left = Inputs, Right = Outputs)
 # ============================================================
 left, right = st.columns([1, 2])
 
 # ─────────────────────────────────────────────────────────────
-# LEFT COLUMN → INPUT + CALCULATE
+# LEFT COLUMN (INPUTS + CALCULATE BUTTON)
 # ─────────────────────────────────────────────────────────────
 with left:
+
     card("Input Data", "📥")
 
     default_df = pd.DataFrame({
@@ -114,10 +115,10 @@ with left:
 
     mode = st.radio("", ["Use Watson & Head", "Enter My Own"], label_visibility="collapsed")
 
+    # Show full table without scroll or height errors
     if mode == "Use Watson & Head":
         df = default_df.copy()
-        # Full-height display → always show all rows
-        st.dataframe(df, use_container_width=True, height=None)
+        st.dataframe(df, use_container_width=True)
     else:
         df = st.data_editor(pd.DataFrame({"X":[None]*5, "Y":[None]*5}),
                              num_rows="fixed", use_container_width=True)
@@ -129,19 +130,19 @@ with left:
     # Convert % → decimals
     df = df.astype(float) / 100
 
-    # Slider (bottom left)
+    # Weight slider (bottom of column)
     weight_x = st.slider("Weight in Asset X", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
+    # RED CALCULATE BUTTON
     calculate = st.button("Calculate")
 
-
 # ─────────────────────────────────────────────────────────────
-# RIGHT SIDE → RESULTS SHOW ONLY AFTER CLICK
+# RIGHT COLUMN (OUTPUTS SHOWN ONLY AFTER CLICK)
 # ─────────────────────────────────────────────────────────────
 if calculate:
 
-    # Stats
+    # Portfolio statistics
     mean_x, mean_y = df.mean()
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
@@ -151,18 +152,18 @@ if calculate:
                (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
-    # Efficient frontier card (expanded — 2/3 width)
     with right:
+        # Open card
         st.markdown("""
         <div class='card'>
             <div class='card-header'>📈 Efficient Frontier</div>
             <div class='card-body'>
         """, unsafe_allow_html=True)
 
-        # Correlation now under title
+        # Correlation displayed under header
         st.markdown(f"<b>Correlation (r):</b> {corr:.2f}", unsafe_allow_html=True)
 
-        # Frontier
+        # Efficient frontier graph
         w = np.linspace(0, 1, 50)
         pf_returns = w * mean_x + (1-w) * mean_y
         pf_sd = np.sqrt(w**2*sd_x**2 + (1-w)**2*sd_y**2 + 2*w*(1-w)*sd_x*sd_y*corr)
@@ -180,7 +181,7 @@ if calculate:
         ax.legend()
         st.pyplot(fig)
 
-        # Close card container
+        # Close card wrapper
         st.markdown("</div></div>", unsafe_allow_html=True)
 
 # ============================================================
