@@ -49,7 +49,7 @@ body, .block-container {
   box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
 }
 
-/* TAB BODY (CARD) */
+/* TAB CARD UNDER HEADER */
 .tab-card {
   border: 1.5px solid #D0DAE2;
   border-radius: 0px 10px 10px 10px;
@@ -59,12 +59,12 @@ body, .block-container {
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-/* SLIDER (NO COLORED BAR BACKGROUND) */
+/* SLIDER BACKGROUND REMOVED */
 div[data-baseweb="slider"] > div {
     background-color: transparent !important;
 }
 
-/* RED CALCULATE BUTTON */
+/* RED BUTTON */
 .stButton > button {
     background-color: #E57373 !important;
     color: white !important;
@@ -75,31 +75,29 @@ div[data-baseweb="slider"] > div {
 .stButton > button:hover {
     background-color: #CC5B5B !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# SOFT TAB FUNCTIONS
+# REUSABLE TAB FUNCTIONS
 # ============================================================
 def soft_tab(title, icon):
     st.markdown(f"<div class='soft-tab'>{icon} {title}</div>", unsafe_allow_html=True)
 
-def tab_body(html=""):
-    st.markdown(f"<div class='tab-card'>{html}</div>", unsafe_allow_html=True)
-
 # ============================================================
-# LAYOUT (INPUT —> OUTPUT)
+# LAYOUT (INPUT | OUTPUT)
 # ============================================================
 left, right = st.columns([1, 2])
 
 # ============================================================
-# LEFT SIDE — INPUT
+# LEFT PANEL — USER INPUT
 # ============================================================
 with left:
 
     soft_tab("Input Data (X & Y Returns)", "📥")
 
-    # Watson & Head default dataset (editable)
+    # Watson & Head Default Returns (editable by user)
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
         "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
@@ -108,58 +106,61 @@ with left:
     df = st.data_editor(default_df, use_container_width=True)
 
     if df.isnull().any().any():
-        st.warning("⚠ Please enter 5 numeric percentage values for BOTH X and Y.")
+        st.warning("⚠ Please enter five numeric % values for both X and Y.")
         st.stop()
 
-    # Convert % to decimals for calculations
+    # Convert from % → decimal calculation
     df = df.astype(float) / 100
 
-    # Portfolio weight slider
     weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
-    # Button
     calculate = st.button("Calculate")
 
 # ============================================================
-# RIGHT SIDE — OUTPUT
+# RIGHT PANEL — OUTPUT (ONLY AFTER CLICK)
 # ============================================================
 if calculate:
 
-    mean_x, mean_y = df.mean()               # Means
-    sd_x, sd_y = df.std(ddof=0)              # SDs
-    corr = df["X"].corr(df["Y"])             # Correlation
+    # ───── Statistics ─────
+    mean_x, mean_y = df.mean()
+    sd_x, sd_y = df.std(ddof=0)
+    corr = df["X"].corr(df["Y"])
 
+    # Portfolio Formulas
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
+    # ───── Output UI ─────
     with right:
+
         soft_tab("Efficient Frontier", "📈")
 
-        # --------------------------------------------------------
-        # 🔎 COMPACT ONE-LINE OUTPUT (Academic Format)
-        # --------------------------------------------------------
-        tab_body(f"""
-**r =** \( {corr:.2f} \) | 
-**\( \\bar{{X}} \)=** \( {mean_x*100:.2f}\\% \) 
-**\( \\bar{{Y}} \)=** \( {mean_y*100:.2f}\\% \) | 
-**\( \\sigma_X \)=** \( {sd_x*100:.2f}\\% \) 
-**\( \\sigma_Y \)=** \( {sd_y*100:.2f}\\% \) | 
-**\( E(R_p) \)=** \( {port_return*100:.2f}\\% \) | 
-**\( \\sigma_p \)=** \( {port_sd*100:.2f}\\% \)
-""")
+        # START CARD
+        st.markdown("<div class='tab-card'>", unsafe_allow_html=True)
 
-        # ============================================================
-        # EFFICIENT FRONTIER GRAPH
-        # ============================================================
+        # PASTEL MIDDLE SEPARATOR
+        sep = "<span style='color:#A3B4C4;'>▪︎</span>"
+
+        # ONE-LINE OUTPUT — LaTeX COMPILED CORRECTLY
+        st.markdown(f"""
+\( r = {corr:.2f} \) {sep}
+\( \\bar{{X}} = {mean_x*100:.2f}\\% \) \( \\bar{{Y}} = {mean_y*100:.2f}\\% \) {sep}
+\( \\sigma_X = {sd_x*100:.2f}\\% \) \( \\sigma_Y = {sd_y*100:.2f}\\% \) {sep}
+\( E(R_p) = {port_return*100:.2f}\\% \) {sep}
+\( \\sigma_p = {port_sd*100:.2f}\\% \)
+""", unsafe_allow_html=True)
+
+        # ───── Efficient Frontier Graph ─────
         w = np.linspace(0, 1, 50)
-        pf_returns = w * mean_x + (1-w) * mean_y
-        pf_sd = np.sqrt(w**2*sd_x**2 + (1-w)**2*sd_y**2 + 2*w*(1-w)*sd_x*sd_y*corr)
+        pf_returns = w * mean_x + (1 - w) * mean_y
+        pf_sd = np.sqrt(w**2 * sd_x**2 + (1 - w)**2 * sd_y**2 +
+                        2 * w * (1 - w) * sd_x * sd_y * corr)
 
         plt.style.use("seaborn-v0_8-whitegrid")
-        fig, ax = plt.subplots(figsize=(8,5))
+        fig, ax = plt.subplots(figsize=(8, 5))
         ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
         ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=60, label="Current Portfolio")
         ax.set_facecolor("#FFFFFF")
@@ -167,6 +168,9 @@ if calculate:
         ax.set_ylabel("Expected Return (%)")
         ax.legend()
         st.pyplot(fig)
+
+        # END CARD
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================================================
 # END OF APP
