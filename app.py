@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (Output Centered Version)
+# 🌸 Diversification of Risk Dashboard (Final Styled Output Text)
 # ============================================================
 
 import streamlit as st
@@ -47,13 +47,21 @@ body, .block-container {
   margin-bottom: 0;
 }
 
-/* FORMULA CLEAN + COMPACT */
-.calc-line {
-    font-size: 10.5px;
-    line-height: 1.1;
-    margin-top: 6px;
+/* OUTPUT TEXT MATCHES APP FONT */
+.output-line {
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 500;
+    margin-top: 10px;
     margin-bottom: 0;
-    padding-right: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+@media (max-width: 700px) {
+  .output-line {
+      font-size: 11px;
+  }
 }
 
 /* SLIDER BACKGROUND REMOVED */
@@ -134,37 +142,21 @@ if calculate:
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
-    # ---------------------- Show calculations in Output column ----------------------
+    # ================= OUTPUT TEXT IN CENTER COLUMN ================= #
     with col_mid:
 
         st.markdown(
-            "<div class='calc-line'>"
-            +
-            fr"$r={corr:.2f}$"
-            " &nbsp;&nbsp;|&nbsp;&nbsp; "
-            +
-            fr"$\bar{{X}}={mean_x*100:.2f}\%$"
-            " , "
-            +
-            fr"$\bar{{Y}}={mean_y*100:.2f}\%$"
-            " &nbsp;&nbsp;|&nbsp;&nbsp; "
-            +
-            fr"$\sigma_X={sd_x*100:.2f}\%$"
-            " , "
-            +
-            fr"$\sigma_Y={sd_y*100:.2f}\%$"
-            " &nbsp;&nbsp;|&nbsp;&nbsp; "
-            +
-            fr"$E(R_p)={port_return*100:.2f}\%$"
-            " &nbsp;&nbsp;|&nbsp;&nbsp; "
-            +
-            fr"$\sigma_p={port_sd*100:.2f}\%$"
-            +
-            "</div>",
+            f"<div class='output-line'>"
+            f"Correlation: {corr:.2f} | "
+            f"Mean X: {mean_x*100:.2f}% , Mean Y: {mean_y*100:.2f}% | "
+            f"Std Dev X: {sd_x*100:.2f}% , Std Dev Y: {sd_y*100:.2f}% | "
+            f"Portfolio Return: {port_return*100:.2f}% | "
+            f"Portfolio Risk: {port_sd*100:.2f}%"
+            f"</div>",
             unsafe_allow_html=True
         )
 
-    # ---------------------- Plot in Right column with compact height ----------------------
+    # ================= PLOT IN RIGHT COLUMN ================= #
     with col2:
 
         soft_tab("Efficient Frontier", "📈")
@@ -178,7 +170,7 @@ if calculate:
         )
 
         plt.style.use("seaborn-v0_8-whitegrid")
-        fig, ax = plt.subplots(figsize=(6.3, 3.5))  # ⬅ reduced height
+        fig, ax = plt.subplots(figsize=(6.5, 3.5))
 
         ax.plot(pf_sd*100, pf_returns*100, linewidth=1.8, color="#5E9BD4")
         ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=45)
