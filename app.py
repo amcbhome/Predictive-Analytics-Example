@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (Responsive Version)
+# 🌸 Diversification of Risk Dashboard (Final Polished Version)
 # ============================================================
 
 import streamlit as st
@@ -21,7 +21,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🎨 PASTEL THEME + SOFT TABS
+# 🎨 PASTEL THEME + SOFT TABS + NO WHITE PANEL AROUND FORMULAS
 # ============================================================
 st.markdown("""
 <style>
@@ -48,13 +48,12 @@ body, .block-container {
   box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
 }
 
-/* CARD UNDER TAB (reduced padding, no gap) */
+/* ⬇ FORMULA CARD REMOVED — ONLY TRANSPARENT BACKGROUND */
 .tab-card {
-  border: 1.5px solid #D0DAE2;
-  border-radius: 0px 10px 10px 10px;
-  background-color: #FFFFFF;
-  padding: 6px 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 2px 4px;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 /* SLIDER BACKGROUND REMOVED */
@@ -133,18 +132,17 @@ if calculate:
     with right:
         soft_tab("Efficient Frontier", "📈")
 
-        # CARD START
+        # Responsive one-line math (smaller text)
         st.markdown("<div class='tab-card'>", unsafe_allow_html=True)
 
-        # 📌 Responsive one-line math
         st.markdown("""
 <div style="
     display:flex;
     flex-wrap:wrap;
-    gap:8px;
+    gap:6px;
     align-items:center;
-    font-size:15px;
-    line-height:1.6;
+    font-size:13px;
+    line-height:1.4;
 ">
 """, unsafe_allow_html=True)
 
