@@ -1,192 +1,134 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
-# ---------------------------
-# PAGE SETUP
-# ---------------------------
-st.set_page_config(page_title="Diversification of Risk Dashboard", layout="wide")
-
-# ---------------------------
-# DEFAULT DATA
-# ---------------------------
-default_data = pd.DataFrame({
-    "X": [6.6, 5.6, -9.0, 12.6, 14.0],
-    "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
-})
-
-# ---------------------------
-# GLOBAL STYLES
-# ---------------------------
+# ------------------------------------------------
+# ---- BASIC APP CONFIG & STYLE ----
+# ------------------------------------------------
+st.set_page_config(page_title="Diversification Dashboard", layout="wide")
 st.markdown("""
 <style>
-
-/* ---------- PAGE HEADINGS ---------- */
-.section-title {
-    background-color: #eaf3ff;
-    padding: 6px 16px;
-    border-radius: 10px;
-    font-size: 22px;
-    font-weight: 600;
-    display: inline-block;
-    border: 1px solid #c9d7e8;
-}
-
-/* ---------- INPUT BOXES ---------- */
-input[type="number"] {
-    height: 32px !important;
-    min-height: 32px !important;
-    width: 100% !important;
-    padding: 2px 6px !important;
-    font-size: 16px !important;
-    text-align: center !important;
-    border: 1px solid #d0d7de !important;
-    border-radius: 6px !important;
-    background-color: #ffffff !important;
-}
-
-/* Reduce input row spacing */
-.input-row {
-    margin-top: -6px !important;
-    margin-bottom: -6px !important;
-    padding: 0px !important;
-}
-
-/* Fix Streamlit inner padding */
-[data-testid="column"] > div {
-    padding-top: 0px !important;
-    padding-bottom: 0px !important;
-    margin-top: -2px !important;
-    margin-bottom: -2px !important;
-}
-
-/* ---------- MATCHED OUTPUT TABLE ---------- */
-.matched-table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 16px;
-    border: 1px solid #c9d7e8;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.matched-table th {
-    background-color: #eaf3ff;
-    padding: 6px;
-    border: 1px solid #d0d7de;
-    font-weight: 600;
-    text-align: center;
-}
-
-.matched-table td {
-    padding: 6px;
-    border: 1px solid #d0d7de;
-    text-align: center;
-    background-color: #ffffff;
-}
-
-/* ---------- BUTTON + SLIDER ---------- */
-.calc-btn button {
-    background-color: #d62828 !important;
-    color: white !important;
-    font-weight: 700 !important;
-    border-radius: 8px !important;
-    font-size: 18px !important;
-    padding: 8px 22px !important;
-}
-.stSlider [role="slider"] {
-    background-color: #d62828 !important;
-}
-
-.weight-label {
-    font-size: 17px !important;
-    font-weight: 500;
-    margin-top: 6px;
-}
+h1 { font-size: 40px; font-weight: 700; }
+.table-style td, .table-style th { text-align:center !important; padding:5px !important; }
+.stButton>button { font-weight:700 !important; font-size:20px !important; border-radius:10px !important; padding:8px 25px; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------
-# LAYOUT
-# ---------------------------
-col1, col2, col3 = st.columns([1, 1, 2])
+# ------------------------------------------------
+# ---- DEFAULT DATA (Watson & Head style) ----
+# ------------------------------------------------
+df = pd.DataFrame({
+    "X": [6.6, 5.6, -9, 12.6, 14],
+    "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
+})
 
-# ---------------------------
-# INPUT COLUMN
-# ---------------------------
-with col1:
-    st.markdown("<div class='section-title'>📥 Input</div>", unsafe_allow_html=True)
+# ------------------------------------------------
+# ---- SIDEBAR INPUT ----
+# ------------------------------------------------
+c1, c2, c3 = st.columns([1, 1, 2])
+
+with c1:
+    st.markdown("### 📥 Input")
     st.write("Enter or edit your returns:")
+    for i in range(len(df)):
+        cols = st.columns(2)
+        df.at[i, "X"] = cols[0].number_input("", value=float(df.at[i, "X"]), step=0.1, key=f"x{i}")
+        df.at[i, "Y"] = cols[1].number_input("", value=float(df.at[i, "Y"]), step=0.1, key=f"y{i}")
 
-    edited_data = {}
-    for i in range(len(default_data)):
-        st.markdown("<div class='input-row'>", unsafe_allow_html=True)
-        c1, c2 = st.columns([1,1])
-        x_val = c1.number_input("", value=float(default_data.loc[i,"X"]), key=f"x{i}",
-                                format="%.2f", label_visibility="collapsed", step=0.01)
-        y_val = c2.number_input("", value=float(default_data.loc[i,"Y"]), key=f"y{i}",
-                                format="%.2f", label_visibility="collapsed", step=0.01)
-        edited_data[i] = [x_val, y_val]
-        st.markdown("</div>", unsafe_allow_html=True)
+    weight = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.01)
 
-    df = pd.DataFrame.from_dict(edited_data, orient="index", columns=["X", "Y"])
+with c2:
+    st.markdown("### 📊 Output")
 
-    st.markdown("<div class='weight-label'>Weight in Asset X (wₓ)</div>", unsafe_allow_html=True)
-    w = st.slider("", 0.0, 1.0, 0.50, 0.01)
+# ------------------------------------------------
+# ---- CALCULATIONS ----
+# ------------------------------------------------
+mean_X = df["X"].mean()
+mean_Y = df["Y"].mean()
+std_X = df["X"].std()
+std_Y = df["Y"].std()
+c_xy = df["X"].corr(df["Y"])
 
-    st.markdown("<div class='calc-btn'>", unsafe_allow_html=True)
-    pressed = st.button("Calculate")
-    st.markdown("</div>", unsafe_allow_html=True)
+# Portfolio statistics
+port_ret = weight * mean_X + (1 - weight) * mean_Y
+port_risk = np.sqrt((weight**2 * std_X**2) +
+                    ((1 - weight)**2 * std_Y**2) +
+                    (2 * weight * (1 - weight) * std_X * std_Y * c_xy))
 
-# ---------------------------
-# OUTPUT COLUMN
-# ---------------------------
-with col2:
-    st.markdown("<div class='section-title'>📊 Output</div>", unsafe_allow_html=True)
+# Output Table
+output = pd.DataFrame({
+    "Metric": ["Correlation", "Mean X", "Mean Y", "Std Dev X", "Std Dev Y", "Portfolio Return", "Portfolio Risk"],
+    "Value (%)": [f"{c_xy*100:.2f}%", f"{mean_X:.2f}%", f"{mean_Y:.2f}%", f"{std_X:.2f}%",
+                  f"{std_Y:.2f}%", f"{port_ret:.2f}%", f"{port_risk:.2f}%"]
+})
+with c2:
+    st.table(output)
 
-    if pressed:
-        df_dec = df / 100  
-        mean_x = df_dec["X"].mean()
-        mean_y = df_dec["Y"].mean()
-        sd_x = df_dec["X"].std(ddof=0)
-        sd_y = df_dec["Y"].std(ddof=0)
-        corr = df_dec["X"].corr(df_dec["Y"])
+# ------------------------------------------------
+# ---- EFFICIENT FRONTIER (PLOTLY) ----
+# ------------------------------------------------
+# Generate points
+w = np.linspace(0, 1, 200)
+front_ret = w * mean_X + (1 - w) * mean_Y
+front_risk = np.sqrt((w**2 * std_X**2) + ((1 - w)**2 * std_Y**2) +
+                      (2 * w * (1 - w) * std_X * std_Y * c_xy))
 
-        port_return = w * mean_x + (1 - w) * mean_y
-        port_var = (w**2 * sd_x**2) + ((1 - w)**2 * sd_y**2) + (2*w*(1-w)*sd_x*sd_y*corr)
-        port_sd = np.sqrt(port_var)
+# Create Plotly chart
+fig = go.Figure()
 
-        output_df = pd.DataFrame({
-            "Metric": ["Correlation", "Mean X", "Mean Y", "Std Dev X", "Std Dev Y", "Portfolio Return", "Portfolio Risk"],
-            "Value (%)": [
-                f"{corr*100:.2f}%", f"{mean_x*100:.2f}%", f"{mean_y*100:.2f}%",
-                f"{sd_x*100:.2f}%", f"{sd_y*100:.2f}%", f"{port_return*100:.2f}%", f"{port_sd*100:.2f}%"
-            ]
-        })
+# Efficient Frontier
+fig.add_trace(go.Scatter(
+    x=front_risk, y=front_ret,
+    mode='lines', name='Efficient Frontier',
+    line=dict(color='blue', width=3)
+))
 
-        st.table(output_df.style.set_table_attributes('class="matched-table"'))
-    else:
-        st.write("Press **Calculate** to display results.")
+# Current Portfolio (Animated Movement)
+fig.add_trace(go.Scatter(
+    x=[port_risk], y=[port_ret],
+    mode='markers', name="📌 Current Portfolio",
+    marker=dict(color='red', size=12)
+))
 
-# ---------------------------
-# GRAPH COLUMN
-# ---------------------------
-with col3:
-    st.markdown("<div class='section-title'>📈 Efficient Frontier</div>", unsafe_allow_html=True)
+# Asset X point
+fig.add_trace(go.Scatter(
+    x=[std_X], y=[mean_X], mode="markers+text",
+    text=["🟢 Asset X"], textposition="top center",
+    name="Asset X", marker=dict(color='green', size=12)
+))
 
-    if pressed:
-        weights = np.arange(0, 1.01, 0.01)
-        returns = weights * mean_x + (1 - weights) * mean_y
-        variances = (weights**2 * sd_x**2) + ((1 - weights)**2 * sd_y**2) + (2*weights*(1-weights)*sd_x*sd_y*corr)
-        risks = np.sqrt(variances)
+# Asset Y point
+fig.add_trace(go.Scatter(
+    x=[std_Y], y=[mean_Y], mode="markers+text",
+    text=["🟠 Asset Y"], textposition="top center",
+    name="Asset Y", marker=dict(color='orange', size=12)
+))
 
-        fig, ax = plt.subplots(figsize=(7,4))
-        ax.plot(risks*100, returns*100, label="Efficient Frontier")
-        ax.scatter(port_sd*100, port_return*100, color="red", label="Current Portfolio")
-        ax.set_xlabel("Risk (Std Dev %)")
-        ax.set_ylabel("Expected Return (%)")
-        ax.grid(True)
-        st.pyplot(fig)
-    else:
-        st.write("Awaiting calculation...")
+# Minimum Risk Portfolio
+min_index = np.argmin(front_risk)
+fig.add_trace(go.Scatter(
+    x=[front_risk[min_index]], y=[front_ret[min_index]],
+    mode="markers+text", text=["🔵 Min Risk"], textposition="bottom right",
+    name="Min Risk", marker=dict(color='blue', size=13, symbol='diamond')
+))
+
+# Add dashed guide lines
+for x, y in [(port_risk, port_ret), (std_X, mean_X), (std_Y, mean_Y)]:
+    fig.add_shape(type="line", x0=x, y0=0, x1=x, y1=y,
+                  line=dict(color="gray", width=1, dash="dash"))
+    fig.add_shape(type="line", x0=0, y0=y, x1=x, y1=y,
+                  line=dict(color="gray", width=1, dash="dash"))
+
+# Layout
+fig.update_layout(
+    title="📈 Efficient Frontier (Hover + Animation)",
+    xaxis_title="Risk (Std Dev %)",
+    yaxis_title="Expected Return (%)",
+    hovermode="closest",
+    template="plotly_white",
+    width=800, height=500
+)
+
+with c3:
+    st.plotly_chart(fig, use_container_width=True)
