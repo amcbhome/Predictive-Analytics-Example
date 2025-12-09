@@ -3,32 +3,26 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# ---------------------------------
+# ---------------------------
 # PAGE SETUP
-# ---------------------------------
+# ---------------------------
 st.set_page_config(page_title="Diversification of Risk Dashboard", layout="wide")
 
-# ---------------------------------
+# ---------------------------
 # DEFAULT DATA
-# ---------------------------------
+# ---------------------------
 default_data = pd.DataFrame({
     "X": [6.6, 5.6, -9.0, 12.6, 14.0],
     "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
 })
 
-# ---------------------------------
-# STYLE CSS
-# ---------------------------------
+# ---------------------------
+# GLOBAL STYLES
+# ---------------------------
 st.markdown("""
 <style>
 
-/* Page Title */
-h1 {
-    font-size: 36px !important;
-    font-weight: 700 !important;
-}
-
-/* Section Headings */
+/* ---------- PAGE HEADINGS ---------- */
 .section-title {
     background-color: #eaf3ff;
     padding: 6px 16px;
@@ -39,56 +33,60 @@ h1 {
     border: 1px solid #c9d7e8;
 }
 
-/* Custom Table for Output */
-.custom-table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 18px;
-    text-align: center;
+/* ---------- INPUT BOXES ---------- */
+input[type="number"] {
+    height: 32px !important;
+    min-height: 32px !important;
+    width: 100% !important;
+    padding: 2px 6px !important;
+    font-size: 16px !important;
+    text-align: center !important;
+    border: 1px solid #d0d7de !important;
+    border-radius: 6px !important;
+    background-color: #ffffff !important;
 }
 
-.custom-table th {
-    background-color: #f6f8fc;
+/* Reduce input row spacing */
+.input-row {
+    margin-top: -6px !important;
+    margin-bottom: -6px !important;
+    padding: 0px !important;
+}
+
+/* Fix Streamlit inner padding */
+[data-testid="column"] > div {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+    margin-top: -2px !important;
+    margin-bottom: -2px !important;
+}
+
+/* ---------- MATCHED OUTPUT TABLE ---------- */
+.matched-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 16px;
+    border: 1px solid #c9d7e8;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.matched-table th {
+    background-color: #eaf3ff;
     padding: 6px;
     border: 1px solid #d0d7de;
     font-weight: 600;
-}
-
-.custom-table td {
-    padding: 4px 6px;
-    border: 1px solid #d0d7de;
     text-align: center;
 }
 
-/* 🔽 Compact Inputs Height */
-input[type="number"] {
-    height: 26px !important;
-    min-height: 26px !important;
-    padding: 0px !important;
-    font-size: 14px !important;
-    text-align: center !important;
+.matched-table td {
+    padding: 6px;
+    border: 1px solid #d0d7de;
+    text-align: center;
+    background-color: #ffffff;
 }
 
-/* 🔽 Reduce Vertical Spacing */
-.input-row {
-    margin-bottom: -3px !important;
-    padding-bottom: 0px !important;
-}
-
-/* Remove top/bottom padding around columns */
-[data-testid="column"] {
-    padding-top: 0px !important;
-    padding-bottom: 0px !important;
-}
-
-/* Weight Label */
-.weight-label {
-    font-size: 17px !important;
-    font-weight: 500;
-    margin-top: 6px;
-}
-
-/* Calculate Button */
+/* ---------- BUTTON + SLIDER ---------- */
 .calc-btn button {
     background-color: #d62828 !important;
     color: white !important;
@@ -97,22 +95,26 @@ input[type="number"] {
     font-size: 18px !important;
     padding: 8px 22px !important;
 }
-
-/* Slider Fill Color */
 .stSlider [role="slider"] {
     background-color: #d62828 !important;
+}
+
+.weight-label {
+    font-size: 17px !important;
+    font-weight: 500;
+    margin-top: 6px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------
+# ---------------------------
 # LAYOUT
-# ---------------------------------
-col1, col2, col3 = st.columns([1,1,2])
+# ---------------------------
+col1, col2, col3 = st.columns([1, 1, 2])
 
-# ----------------------
+# ---------------------------
 # INPUT COLUMN
-# ----------------------
+# ---------------------------
 with col1:
     st.markdown("<div class='section-title'>📥 Input</div>", unsafe_allow_html=True)
     st.write("Enter or edit your returns:")
@@ -120,9 +122,11 @@ with col1:
     edited_data = {}
     for i in range(len(default_data)):
         st.markdown("<div class='input-row'>", unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        x_val = c1.number_input(" ", value=float(default_data.loc[i,"X"]), key=f"x{i}", format="%.2f", label_visibility="collapsed")
-        y_val = c2.number_input(" ", value=float(default_data.loc[i,"Y"]), key=f"y{i}", format="%.2f", label_visibility="collapsed")
+        c1, c2 = st.columns([1,1])
+        x_val = c1.number_input("", value=float(default_data.loc[i,"X"]), key=f"x{i}",
+                                format="%.2f", label_visibility="collapsed", step=0.01)
+        y_val = c2.number_input("", value=float(default_data.loc[i,"Y"]), key=f"y{i}",
+                                format="%.2f", label_visibility="collapsed", step=0.01)
         edited_data[i] = [x_val, y_val]
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -135,9 +139,9 @@ with col1:
     pressed = st.button("Calculate")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ----------------------
-# CALCULATIONS + OUTPUT
-# ----------------------
+# ---------------------------
+# OUTPUT COLUMN
+# ---------------------------
 with col2:
     st.markdown("<div class='section-title'>📊 Output</div>", unsafe_allow_html=True)
 
@@ -153,7 +157,7 @@ with col2:
         port_var = (w**2 * sd_x**2) + ((1 - w)**2 * sd_y**2) + (2*w*(1-w)*sd_x*sd_y*corr)
         port_sd = np.sqrt(port_var)
 
-        output_table = pd.DataFrame({
+        output_df = pd.DataFrame({
             "Metric": ["Correlation", "Mean X", "Mean Y", "Std Dev X", "Std Dev Y", "Portfolio Return", "Portfolio Risk"],
             "Value (%)": [
                 f"{corr*100:.2f}%", f"{mean_x*100:.2f}%", f"{mean_y*100:.2f}%",
@@ -161,21 +165,21 @@ with col2:
             ]
         })
 
-        st.table(output_table.style.set_table_attributes('class="custom-table"'))
+        st.table(output_df.style.set_table_attributes('class="matched-table"'))
     else:
         st.write("Press **Calculate** to display results.")
 
-# ----------------------
+# ---------------------------
 # GRAPH COLUMN
-# ----------------------
+# ---------------------------
 with col3:
     st.markdown("<div class='section-title'>📈 Efficient Frontier</div>", unsafe_allow_html=True)
 
     if pressed:
         weights = np.arange(0, 1.01, 0.01)
         returns = weights * mean_x + (1 - weights) * mean_y
-        vars_ = (weights**2 * sd_x**2) + ((1 - weights)**2 * sd_y**2) + (2*weights*(1-weights)*sd_x*sd_y*corr)
-        risks = np.sqrt(vars_)
+        variances = (weights**2 * sd_x**2) + ((1 - weights)**2 * sd_y**2) + (2*weights*(1-weights)*sd_x*sd_y*corr)
+        risks = np.sqrt(variances)
 
         fig, ax = plt.subplots(figsize=(7,4))
         ax.plot(risks*100, returns*100, label="Efficient Frontier")
@@ -186,4 +190,3 @@ with col3:
         st.pyplot(fig)
     else:
         st.write("Awaiting calculation...")
-
