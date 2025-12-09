@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (Final Polished Version)
+# 🌸 Diversification of Risk Dashboard (3-Column Final Version)
 # ============================================================
 
 import streamlit as st
@@ -95,18 +95,17 @@ def soft_tab(title, icon):
     st.markdown(f"<div class='soft-tab'>{icon} {title}</div>", unsafe_allow_html=True)
 
 # ============================================================
-# 📌 LAYOUT (INPUT | OUTPUT) — Narrow Left Panel
+# 📌 LAYOUT (NOW 3 COLUMNS: INPUT | OUTPUT | GRAPH)
 # ============================================================
-left, right = st.columns([0.6, 2.4])
+col1, col_mid, col2 = st.columns([0.6, 0.6, 3.0])
 
 # ============================================================
-# LEFT PANEL — USER INPUT
+# LEFT COLUMN — INPUT
 # ============================================================
-with left:
+with col1:
 
     soft_tab("Input", "📥")
 
-    # Default data (Watson & Head)
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
         "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
@@ -125,7 +124,13 @@ with left:
     calculate = st.button("Calculate")
 
 # ============================================================
-# RIGHT PANEL — OUTPUT
+# MIDDLE COLUMN — OUTPUT LABEL ONLY
+# ============================================================
+with col_mid:
+    soft_tab("Output", "📊")  # Title only, no border, no content
+
+# ============================================================
+# RIGHT COLUMN — CHART + METRICS
 # ============================================================
 if calculate:
 
@@ -134,13 +139,13 @@ if calculate:
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
 
-    # Portfolio outputs
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
-    with right:
+    with col2:
+
         soft_tab("Efficient Frontier", "📈")
 
         # —— Equation Line —— 
@@ -199,5 +204,5 @@ if calculate:
 
 # ============================================================
 # END OF APP
-# ===========================================================
+# ============================================================
 
