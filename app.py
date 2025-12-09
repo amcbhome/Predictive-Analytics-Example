@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (Final Polished Version)
+# 🌸 Diversification of Risk Dashboard (Fully Responsive Final)
 # ============================================================
 
 import streamlit as st
@@ -21,7 +21,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🎨 PASTEL THEME + SOFT TABS + NO WHITE PANEL AROUND FORMULAS
+# 🎨 FULL RESPONSIVE PASTEL THEME
 # ============================================================
 st.markdown("""
 <style>
@@ -48,12 +48,33 @@ body, .block-container {
   box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
 }
 
-/* ⬇ FORMULA CARD REMOVED — ONLY TRANSPARENT BACKGROUND */
+/* REMOVE WHITE CARD */
 .tab-card {
-  padding: 2px 4px;
+  padding: 0px;
   background-color: transparent;
   border: none;
   box-shadow: none;
+  margin-top: -5px;
+}
+
+/* 🎯 Responsive formula scaling */
+.calc-line {
+    transform: scale(1);
+    transform-origin: left center;
+}
+
+/* Tablets / small laptops */
+@media (max-width: 900px) {
+  .calc-line {
+      transform: scale(0.85);
+  }
+}
+
+/* Phones */
+@media (max-width: 600px) {
+  .calc-line {
+      transform: scale(0.70);
+  }
 }
 
 /* SLIDER BACKGROUND REMOVED */
@@ -94,7 +115,7 @@ with left:
 
     soft_tab("Input Data (X & Y Returns)", "📥")
 
-    # Default data (Watson & Head)
+    # Default Watson & Head
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
         "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
@@ -132,17 +153,17 @@ if calculate:
     with right:
         soft_tab("Efficient Frontier", "📈")
 
-        # Responsive one-line math (smaller text)
         st.markdown("<div class='tab-card'>", unsafe_allow_html=True)
 
+        # ——— Responsive Math Line ———
         st.markdown("""
-<div style="
+<div class="calc-line" style="
     display:flex;
     flex-wrap:wrap;
     gap:6px;
     align-items:center;
-    font-size:9px;
-    line-height:1.4;
+    font-size:11px;
+    line-height:1.1;
 ">
 """, unsafe_allow_html=True)
 
@@ -164,20 +185,30 @@ if calculate:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # GRAPH
+        # ——— Responsive Efficient Frontier Plot ———
+
+        # Calculate full curve
         w = np.linspace(0, 1, 50)
         pf_returns = w * mean_x + (1 - w) * mean_y
-        pf_sd = np.sqrt(w**2 * sd_x**2 + (1 - w)**2 * sd_y**2 +
-                        2 * w * (1 - w) * sd_x * sd_y * corr)
+        pf_sd = np.sqrt(
+            w**2 * sd_x**2 +
+            (1 - w)**2 * sd_y**2 +
+            2 * w * (1 - w) * sd_x * sd_y * corr
+        )
 
+        # Matplotlib style
         plt.style.use("seaborn-v0_8-whitegrid")
-        fig, ax = plt.subplots(figsize=(8, 5))
+        fig, ax = plt.subplots(figsize=(7, 4))
+
+        # Desktop linewidth, mobile thinner
         ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
-        ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=60, label="Current Portfolio")
+        ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=50, label="Current Portfolio")
+
         ax.set_facecolor("#FFFFFF")
-        ax.set_xlabel("Risk (Std Dev %)")
-        ax.set_ylabel("Expected Return (%)")
-        ax.legend()
+        ax.set_xlabel("Risk (Std Dev %)", fontsize=10)
+        ax.set_ylabel("Expected Return (%)", fontsize=10)
+        ax.tick_params(axis='both', labelsize=9)
+        ax.legend(fontsize=9)
         st.pyplot(fig)
 
         st.markdown("</div>", unsafe_allow_html=True)
