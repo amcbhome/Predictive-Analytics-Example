@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (3-Column Final Version)
+# 🌸 Diversification of Risk Dashboard (Output Centered Version)
 # ============================================================
 
 import streamlit as st
@@ -17,6 +17,7 @@ st.markdown("""
     color:#36454F;
     font-family: Segoe UI, sans-serif;
     font-weight: 650;
+    margin-bottom: 0;
 '>📊 Diversification of Risk Dashboard</h1>
 """, unsafe_allow_html=True)
 
@@ -35,37 +36,24 @@ body, .block-container {
 /* SOFT TAB HEADER */
 .soft-tab {
   display: inline-block;
-  padding: 10px 18px;
+  padding: 8px 16px;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 17px;
   border: 1.5px solid #D0DAE2;
   background-color: #E8F3FF;
   color: #336699 !important;
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
+  border-radius: 14px 14px 0px 0px;
   border-bottom: none;
-  margin-right: 8px;
-  box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
+  margin-bottom: 0;
 }
 
-/* FORMULA AREA CLEAN (NO BORDER/BOX) */
-.tab-card {
-  padding: 0px;
-  background-color: transparent;
-  border: none;
-  box-shadow: none;
-  margin-top: -5px;
-}
-
-/* 🎯 Responsive formula scaling (only on small screens) */
+/* FORMULA CLEAN + COMPACT */
 .calc-line {
-    font-size: 11px;
+    font-size: 10.5px;
     line-height: 1.1;
-}
-@media (max-width: 700px) {
-  .calc-line {
-      font-size: 9px;
-  }
+    margin-top: 6px;
+    margin-bottom: 0;
+    padding-right: 5px;
 }
 
 /* SLIDER BACKGROUND REMOVED */
@@ -80,6 +68,7 @@ div[data-baseweb="slider"] > div {
     border-radius: 8px;
     font-weight: 600;
     border: 1px solid #CC5B5B !important;
+    padding: 0.45rem 0.8rem;
 }
 .stButton > button:hover {
     background-color: #CC5B5B !important;
@@ -95,12 +84,12 @@ def soft_tab(title, icon):
     st.markdown(f"<div class='soft-tab'>{icon} {title}</div>", unsafe_allow_html=True)
 
 # ============================================================
-# 📌 LAYOUT (NOW 3 COLUMNS: INPUT | OUTPUT | GRAPH)
+# 📌 LAYOUT (INPUT | OUTPUT | GRAPH)
 # ============================================================
 col1, col_mid, col2 = st.columns([0.6, 0.6, 3.0])
 
 # ============================================================
-# LEFT COLUMN — INPUT
+# 🟦 LEFT COLUMN — INPUT
 # ============================================================
 with col1:
 
@@ -124,13 +113,13 @@ with col1:
     calculate = st.button("Calculate")
 
 # ============================================================
-# MIDDLE COLUMN — OUTPUT LABEL ONLY
+# 🟨 MIDDLE COLUMN — OUTPUT (calculations)
 # ============================================================
 with col_mid:
-    soft_tab("Output", "📊")  # Title only, no border, no content
+    soft_tab("Output", "📊")
 
 # ============================================================
-# RIGHT COLUMN — CHART + METRICS
+# 🟥 RIGHT COLUMN — GRAPH + OUTPUT
 # ============================================================
 if calculate:
 
@@ -139,17 +128,15 @@ if calculate:
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
 
+    # Portfolio outputs
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
-    with col2:
+    # ---------------------- Show calculations in Output column ----------------------
+    with col_mid:
 
-        soft_tab("Efficient Frontier", "📈")
-
-        # —— Equation Line —— 
-        st.markdown("<div class='tab-card'>", unsafe_allow_html=True)
         st.markdown(
             "<div class='calc-line'>"
             +
@@ -177,7 +164,11 @@ if calculate:
             unsafe_allow_html=True
         )
 
-        # —— Efficient Frontier Plot —— 
+    # ---------------------- Plot in Right column with compact height ----------------------
+    with col2:
+
+        soft_tab("Efficient Frontier", "📈")
+
         w = np.linspace(0, 1, 50)
         pf_returns = w * mean_x + (1 - w) * mean_y
         pf_sd = np.sqrt(
@@ -187,20 +178,17 @@ if calculate:
         )
 
         plt.style.use("seaborn-v0_8-whitegrid")
-        fig, ax = plt.subplots(figsize=(7, 4))
+        fig, ax = plt.subplots(figsize=(6.3, 3.5))  # ⬅ reduced height
 
-        ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
-        ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=50, label="Current Portfolio")
+        ax.plot(pf_sd*100, pf_returns*100, linewidth=1.8, color="#5E9BD4")
+        ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=45)
 
         ax.set_facecolor("#FFFFFF")
-        ax.set_xlabel("Risk (Std Dev %)", fontsize=10)
-        ax.set_ylabel("Expected Return (%)", fontsize=10)
-        ax.tick_params(axis='both', labelsize=9)
-        ax.legend(fontsize=9)
+        ax.set_xlabel("Risk (Std Dev %)", fontsize=9)
+        ax.set_ylabel("Expected Return (%)", fontsize=9)
+        ax.tick_params(axis='both', labelsize=8)
 
         st.pyplot(fig)
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================================================
 # END OF APP
