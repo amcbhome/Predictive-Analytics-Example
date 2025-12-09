@@ -1,5 +1,5 @@
 # ============================================================
-# 📌 Diversification of Risk – Business Theme (Streamlit)
+# 🌸 Diversification of Risk – Pastel Light Theme (Streamlit)
 # ============================================================
 
 import streamlit as st
@@ -12,83 +12,103 @@ import matplotlib.pyplot as plt
 # ─────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Diversification App", layout="wide")
 
-st.markdown("<h1 style='color:#E8E8E8;'>📊 Diversification of Risk Dashboard</h1>", 
-            unsafe_allow_html=True)
+st.markdown("""
+<h1 style='
+    color:#36454F;
+    font-family: Segoe UI, sans-serif;
+    font-weight: 650;
+'>📊 Diversification of Risk Dashboard</h1>
+""", unsafe_allow_html=True)
 
-# ======== BUSINESS THEME STYLE ==========
+# ======== PASTEL THEME STYLING ==========
 st.markdown("""
 <style>
 
 /* ===== BACKGROUND ===== */
 body, .block-container {
-    background-color: #1C1F23;
-    color: #EAEAEA;
+    background-color: #FAFAFA;
+    color: #333333;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* ===== TEXT COLORS ===== */
+/* ===== HEADINGS ===== */
 h1,h2,h3,h4,p,div, label, span {
-    color: #E8E8E8 !important;
+    color: #36454F !important;
 }
 
-/* ===== CARD DESIGN ===== */
+/* ===== CARD CONTAINERS ===== */
 .card {
-  border: 1.5px solid #2F3238;
-  border-radius: 10px;
-  background-color: #23272B;
-  margin-bottom: 15px;
+  border: 1.3px solid #D8DEE3;
+  border-radius: 12px;
+  background-color: #FFFFFF;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 /* ===== CARD HEADER ===== */
 .card-header {
-  background-color: #2A2E33;
+  background-color: #E8F3FF;             /* Pastel sky blue */
   padding: 10px 14px;
   font-weight: 600;
   font-size: 18px;
-  border-bottom: 1.5px solid #40454D;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  color: #8AC7FF !important;
+  border-bottom: 1.3px solid #C9D5E1;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  color: #336699 !important;
 }
 
 /* ===== CARD BODY ===== */
 .card-body {
-  padding: 12px 14px;
+  padding: 12px 16px;
   font-size: 15px;
+  color:#36454F !important;
 }
 
-/* ===== RADIO ===== */
-.stRadio > div { gap: 6px; }
-.stRadio label { color: #E8E8E8 !important; font-weight:500; }
+/* ===== RADIO BUTTONS ===== */
+.stRadio > div { gap: 4px; }
+.stRadio label { color: #36454F !important; font-weight:500; }
 
-/* ===== SLIDER ===== */
+/* ===== SLIDER TRACK COLOR ===== */
 div[data-baseweb="slider"] > div {
-    background-color: #0078D4 !important;
+    background-color: #82C7A5 !important;   /* Pastel mint */
 }
+.stSlider label {color:#36454F !important;}
 
-/* ===== DATAFRAME ===== */
+/* ===== TABLE ===== */
 [data-testid="stTable"], .stDataFrame iframe {
-    background-color: #2A2E33 !important;
-    color: white !important;
+    background-color: #FFFFFF !important;
+    color: #36454F !important;
+    border-radius: 8px;
 }
 
+/* ===== SUCCESS/WARNING MESSAGES ===== */
+.stSuccess {
+    background-color:#EAF8F1 !important;
+    border-left:4px solid #85D4B7 !important;
+}
+.stWarning {
+    background-color:#FFF7E6 !important;
+    border-left:4px solid #F2C76E !important;
+}
 </style>
 """, unsafe_allow_html=True)
+
 
 # ======== CARD FUNCTION ==========
 def card(title, icon, content=""):
     return st.markdown(f"""
     <div class="card">
         <div class="card-header">{icon} {title}</div>
-        <div class="card-body">
-            {content}
-        </div>
+        <div class="card-body">{content}</div>
     </div>
     """, unsafe_allow_html=True)
+
 
 # ============================================================
 # GRID LAYOUT (3 Columns)
 # ============================================================
 col1, col2, col3 = st.columns([1.3, 1, 1.4])
+
 
 # ─────────────────────────────────────────────────────────────
 # COLUMN 1 → DATA ENTRY
@@ -116,28 +136,26 @@ with col1:
 
     df = df.astype(float) / 100    # Convert to decimals
 
-    # Basic stats
     mean_s, mean_t = df.mean()
     sd_s, sd_t = df.std(ddof=0)
     corr = df["S"].corr(df["T"])
+
 
 # ─────────────────────────────────────────────────────────────
 # COLUMN 2 → CORRELATION + WEIGHTS
 # ─────────────────────────────────────────────────────────────
 with col2:
-    # CORRELATION CARD
     card("Correlation Analysis", "🔗", f"<b>Correlation (r):</b> {corr:.2f}")
 
-    # WEIGHTS
     weight_s = st.slider("Weight in Asset S", 0.0, 1.0, 0.5, 0.05)
-    weight_t = 1 - weight_s
+    weight_t = 1-weight_s
     card("Portfolio Weights", "⚖️", f"S = {weight_s:.2f}, T = {weight_t:.2f}")
 
-    # Portfolio Calculations
     port_return = weight_s * mean_s + weight_t * mean_t
     port_var = (weight_s**2 * sd_s**2) + (weight_t**2 * sd_t**2) + \
                (2 * weight_s * weight_t * sd_s * sd_t * corr)
     port_sd = np.sqrt(port_var)
+
 
 # ─────────────────────────────────────────────────────────────
 # COLUMN 3 → GRAPH + RESULT
@@ -145,27 +163,22 @@ with col2:
 with col3:
     card("Efficient Frontier", "📈")
 
-    # Efficient Frontier Curve
     w = np.linspace(0, 1, 50)
     pf_returns = w * mean_s + (1-w) * mean_t
     pf_sd = np.sqrt(w**2*sd_s**2 + (1-w)**2*sd_t**2 + 2*w*(1-w)*sd_s*sd_t*corr)
 
-    # Business theme graph
-    plt.style.use("dark_background")
+    plt.style.use("seaborn-v0_8-whitegrid")
     fig, ax = plt.subplots(figsize=(6,4))
 
-    ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#3EA6FF", label="Efficient Frontier")
-    ax.scatter(port_sd*100, port_return*100, color="#FF4B4B", s=60, label="Current Portfolio")
+    ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
+    ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=60, label="Current Portfolio")
 
-    ax.set_facecolor("#23272B")
+    ax.set_facecolor("#FFFFFF")
     ax.set_xlabel("Risk (Std Dev %)")
     ax.set_ylabel("Expected Return (%)")
-    ax.grid(color="#555", linestyle="--", alpha=0.5)
     ax.legend()
-
     st.pyplot(fig)
 
-    # Minimum Risk Summary
     min_risk = min(pf_sd) * 100
     card("Diversification Benefit", "📉",
          f"<b>Minimum achievable risk:</b> {min_risk:.2f}%<br>"
