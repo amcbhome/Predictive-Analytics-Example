@@ -141,7 +141,7 @@ if calculate:
     flex-wrap:wrap;
     gap:6px;
     align-items:center;
-    font-size:11px;
+    font-size:9px;
     line-height:1.4;
 ">
 """, unsafe_allow_html=True)
