@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk – Soft Edge Tabs + Watson & Head
+# 🌸 Diversification of Risk – Soft Tabs + Watson & Head Data
 # ============================================================
 
 import streamlit as st
@@ -21,7 +21,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🎨 PASTEL LIGHT THEME + SOFT EDGE TABS
+# 🎨 PASTEL SOFT TAB THEME
 # ============================================================
 st.markdown("""
 <style>
@@ -33,7 +33,7 @@ body, .block-container {
     color: #36454F;
 }
 
-/* SOFT EDGE TAB HEADER */
+/* SOFT TAB HEADER */
 .soft-tab {
   display: inline-block;
   padding: 10px 18px;
@@ -49,7 +49,7 @@ body, .block-container {
   box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
 }
 
-/* CARD BODY UNDER TAB */
+/* TAB BODY (CARD) */
 .tab-card {
   border: 1.5px solid #D0DAE2;
   border-radius: 0px 10px 10px 10px;
@@ -59,12 +59,12 @@ body, .block-container {
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-/* SLIDER (NO BACKGROUND COLOR) */
+/* SLIDER (NO COLORED BAR BACKGROUND) */
 div[data-baseweb="slider"] > div {
     background-color: transparent !important;
 }
 
-/* RED BUTTON */
+/* RED CALCULATE BUTTON */
 .stButton > button {
     background-color: #E57373 !important;
     color: white !important;
@@ -79,9 +79,8 @@ div[data-baseweb="slider"] > div {
 </style>
 """, unsafe_allow_html=True)
 
-
 # ============================================================
-# FUNCTIONS (HEADER + BODY)
+# SOFT TAB FUNCTIONS
 # ============================================================
 def soft_tab(title, icon):
     st.markdown(f"<div class='soft-tab'>{icon} {title}</div>", unsafe_allow_html=True)
@@ -89,22 +88,19 @@ def soft_tab(title, icon):
 def tab_body(html=""):
     st.markdown(f"<div class='tab-card'>{html}</div>", unsafe_allow_html=True)
 
-
 # ============================================================
-# LAYOUT (LEFT INPUTS, RIGHT OUTPUT)
+# 2 COLUMN LAYOUT
 # ============================================================
 left, right = st.columns([1, 2])
 
-# ─────────────────────────────────────────────────────────────
-# LEFT COLUMN — INPUT TAB + BODY
-# ─────────────────────────────────────────────────────────────
+# ============================================================
+# LEFT COLUMN (INPUTS)
+# ============================================================
 with left:
 
     soft_tab("Input Data (X & Y Returns)", "📥")
 
-    tab_body("")  # Empty for visual connection
-
-    # Watson & Head defaults (editable)
+    # Watson & Head 8th Edition Default (Editable Table)
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
         "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
@@ -116,57 +112,59 @@ with left:
         st.warning("⚠ Please enter 5 percentage values for BOTH X and Y.")
         st.stop()
 
-    # Convert % to decimals
+    # Convert % → decimals for calculation
     df = df.astype(float) / 100
 
-    # Weight slider
+    # Portfolio weight slider
     weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
-    # Button
+    # Red Calculate Button
     calculate = st.button("Calculate")
 
-
-# ─────────────────────────────────────────────────────────────
-# RIGHT COLUMN — OUTPUT SECTION (ONLY AFTER CLICK)
-# ─────────────────────────────────────────────────────────────
+# ============================================================
+# RIGHT COLUMN (RESULTS)
+# ============================================================
 if calculate:
 
-    # Statistics
+    # Summary statistics
     mean_x, mean_y = df.mean()
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
 
-    # Portfolio equations
+    # Portfolio return and risk
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
     with right:
-        # Soft tab header
+        # Soft Tab Header
         soft_tab("Efficient Frontier", "📈")
 
-        # TAB BODY showing correlation + algebra + graph under one section
+        # STATISTICS + ALGEBRA BOX
         tab_body(f"""
-        <b>Correlation:</b> r = {corr:.2f}<br><br>
+### 📌 Correlation
+\( r = {corr:.2f} \)
 
-        <b>Mean Returns:</b>  
-        \( \\bar{{X}} = {mean_x*100:.2f}\\%, \quad \\bar{{Y}} = {mean_y*100:.2f}\\% \)<br>
+### 📊 Mean Returns
+\( \\bar{{X}} = {mean_x*100:.2f}\\% \quad ; \quad \\bar{{Y}} = {mean_y*100:.2f}\\% \)
 
-        <b>Risk (Std Dev):</b>  
-        \( \\sigma_X = {sd_x*100:.2f}\\%, \quad \\sigma_Y = {sd_y*100:.2f}\\% \)<br><br>
+### 📉 Risk (Standard Deviation)
+\( \\sigma_X = {sd_x*100:.2f}\\% \quad ; \quad \\sigma_Y = {sd_y*100:.2f}\\% \)
 
-        <b>Portfolio Expected Return:</b>  
-        \( E(R_p) = w_X\\bar{{X}} + w_Y\\bar{{Y}} \)  
-        → <b>{port_return*100:.2f}%</b><br><br>
+### 💼 Portfolio Expected Return
+\( E(R_p) = w_X\\bar{{X}} + w_Y\\bar{{Y}} \)\
+👉 **{port_return*100:.2f}%**
 
-        <b>Portfolio Risk:</b>  
-        \( \\sigma_p = \\sqrt{{ w_X^2\\sigma_X^2 + w_Y^2\\sigma_Y^2 + 2w_Xw_Y\\sigma_X\\sigma_Yr }} \)  
-        → <b>{port_sd*100:.2f}%</b>
+### ⚠️ Portfolio Risk
+\( \\sigma_p = \\sqrt{{ w_X^2\\sigma_X^2 + w_Y^2\\sigma_Y^2 + 2w_Xw_Y\\sigma_X\\sigma_Yr }} \)\
+👉 **{port_sd*100:.2f}%**
         """)
 
-        # Efficient Frontier graph
+        # ============================================================
+        # EFFICIENT FRONTIER GRAPH
+        # ============================================================
         w = np.linspace(0, 1, 50)
         pf_returns = w * mean_x + (1-w) * mean_y
         pf_sd = np.sqrt(w**2*sd_x**2 + (1-w)**2*sd_y**2 + 2*w*(1-w)*sd_x*sd_y*corr)
