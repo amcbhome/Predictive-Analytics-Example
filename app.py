@@ -109,12 +109,14 @@ with left:
         st.warning("⚠ Please enter five numeric % values for both X and Y.")
         st.stop()
 
-    # Convert from % → decimal calculation
+    # Convert from % → decimal for calculations
     df = df.astype(float) / 100
 
+    # Portfolio weights
     weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
+    # Action button
     calculate = st.button("Calculate")
 
 # ============================================================
@@ -122,18 +124,17 @@ with left:
 # ============================================================
 if calculate:
 
-    # ───── Statistics ─────
+    # ───── Summary Statistics ─────
     mean_x, mean_y = df.mean()
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
 
-    # Portfolio Formulas
+    # ───── Portfolio Calculations ─────
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
-    # ───── Output UI ─────
     with right:
 
         soft_tab("Efficient Frontier", "📈")
@@ -141,16 +142,26 @@ if calculate:
         # START CARD
         st.markdown("<div class='tab-card'>", unsafe_allow_html=True)
 
-        # PASTEL MIDDLE SEPARATOR
-        sep = "<span style='color:#A3B4C4;'>▪︎</span>"
+        # PASTEL SEPARATOR
+        sep = "<span style='color:#A3B4C4; font-size:18px;'>•</span>"
 
-        # ONE-LINE OUTPUT — LaTeX COMPILED CORRECTLY
+        # 🎯 FINAL COMPACT STATS OUTPUT (with spacing)
         st.markdown(f"""
-\( r = {corr:.2f} \) {sep}
-\( \\bar{{X}} = {mean_x*100:.2f}\\% \) \( \\bar{{Y}} = {mean_y*100:.2f}\\% \) {sep}
-\( \\sigma_X = {sd_x*100:.2f}\\% \) \( \\sigma_Y = {sd_y*100:.2f}\\% \) {sep}
-\( E(R_p) = {port_return*100:.2f}\\% \) {sep}
+<div style='font-size:17px; line-height:2;'>
+\( r = {corr:.2f} \)
+&nbsp;&nbsp;{sep}&nbsp;&nbsp;
+\( \\bar{{X}} = {mean_x*100:.2f}\\% \)
+&nbsp;
+\( \\bar{{Y}} = {mean_y*100:.2f}\\% \)
+&nbsp;&nbsp;{sep}&nbsp;&nbsp;
+\( \\sigma_X = {sd_x*100:.2f}\\% \)
+&nbsp;
+\( \\sigma_Y = {sd_y*100:.2f}\\% \)
+&nbsp;&nbsp;{sep}&nbsp;&nbsp;
+\( E(R_p) = {port_return*100:.2f}\\% \)
+&nbsp;&nbsp;{sep}&nbsp;&nbsp;
 \( \\sigma_p = {port_sd*100:.2f}\\% \)
+</div>
 """, unsafe_allow_html=True)
 
         # ───── Efficient Frontier Graph ─────
@@ -175,3 +186,4 @@ if calculate:
 # ============================================================
 # END OF APP
 # ============================================================
+
