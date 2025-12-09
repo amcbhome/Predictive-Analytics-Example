@@ -1,11 +1,10 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Portfolio Risk Demo", layout="wide")
+st.set_page_config(page_title="Portfolio Diversification Visualiser", layout="wide")
 
-# ---------- APP STYLING ----------
+# ---------- PAGE STYLING ----------
 st.markdown("""
 <style>
 /* tighten row spacing */
@@ -17,18 +16,37 @@ st.markdown("""
 .st-emotion-cache-16idsys p {
     margin-bottom: -10px !important;
 }
-/* table text align center */
+/* center table text */
 th, td {
     text-align: center !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- TITLE ----------
-st.title("📊 Portfolio Diversification Visualiser")
+# ================================
+#        TITLE (3 COLUMNS)
+# ================================
+colA, colB, colC = st.columns([1, 4, 1])
 
-# ---------- INPUT DATA ----------
-st.subheader("Input Asset Data (5 values)")
+with colA:
+    st.image(
+        "https://cdn-icons-png.flaticon.com/512/2331/2331944.png",
+        width=80
+    )
+
+with colB:
+    st.markdown(
+        "<h1 style='text-align: center;'>Portfolio Diversification Visualiser</h1>",
+        unsafe_allow_html=True
+    )
+
+with colC:
+    st.write("")
+
+# ================================
+#        INPUT SECTION
+# ================================
+st.markdown("<h3 style='text-align: center;'>Input Asset Data (5 values)</h3>", unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 
@@ -48,13 +66,16 @@ with col2:
     y4 = st.number_input("Y4", value=11.0, step=0.1, format="%.2f")
     y5 = st.number_input("Y5", value=15.0, step=0.1, format="%.2f")
 
+# convert to np arrays
 x_values = np.array([x1, x2, x3, x4, x5])
 y_values = np.array([y1, y2, y3, y4, y5])
 
-# ---------- PLOT CURVE ----------
+# ================================
+#        PORTFOLIO CURVE
+# ================================
 st.subheader("📈 Risk & Return Relationship Curve")
 
-# Create a smooth curve from the values
+# smooth portfolio line based on means
 weights = np.linspace(0, 1, 100)
 portfolio = weights * x_values.mean() + (1 - weights) * y_values.mean()
 
@@ -67,14 +88,26 @@ fig.add_trace(go.Scatter(
     name="Portfolio Curve"
 ))
 
-# Highlight X and Y
-fig.add_trace(go.Scatter(x=[1], y=[x_values.mean()], mode="markers+text",
-                         text=["X"], textposition="top center", marker=dict(size=10)))
+# highlight X and Y means
+fig.add_trace(go.Scatter(
+    x=[1],
+    y=[x_values.mean()],
+    mode="markers+text",
+    text=["X"],
+    textposition="top center",
+    marker=dict(size=10)
+))
 
-fig.add_trace(go.Scatter(x=[0], y=[y_values.mean()], mode="markers+text",
-                         text=["Y"], textposition="top center", marker=dict(size=10)))
+fig.add_trace(go.Scatter(
+    x=[0],
+    y=[y_values.mean()],
+    mode="markers+text",
+    text=["Y"],
+    textposition="top center",
+    marker=dict(size=10)
+))
 
-# Force axes to start at 5
+# enforce axis minimum of 5
 fig.update_yaxes(range=[5, None])
 fig.update_xaxes(range=[0, 1])
 
