@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (Table-Based Output)
+# 🌸 Diversification of Risk Dashboard (Matching Tables Version)
 # ============================================================
 
 import streamlit as st
@@ -23,7 +23,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🎨 STYLE: PASTEL UI + UNIFIED TABLE LOOK (18px FONT)
+# 🎨 STYLE: PASTEL UI + MATCHING TABLES (NO INDEX)
 # ============================================================
 st.markdown("""
 <style>
@@ -34,13 +34,7 @@ body, .block-container {
     color: #36454F;
 }
 
-/* 🔹 Large text for Input/Output areas */
-.large-io {
-    font-size: 18px !important;
-    font-weight: 500;
-}
-
-/* 🏷️ Soft Tab Headers */
+/* Soft Tab Headers */
 .soft-tab {
   display: inline-block;
   padding: 8px 16px;
@@ -54,7 +48,25 @@ body, .block-container {
   margin-bottom: 0;
 }
 
-/* 🔘 BOLDER RED BUTTON */
+/* Matching table styling */
+.table-box table {
+    font-size: 18px !important;
+    width: 100%;
+}
+
+/* Center headers + values */
+.table-box th {
+    text-align: center !important;
+    font-weight: 700 !important;
+    font-size: 18px;
+}
+.table-box td {
+    text-align: center !important;
+    padding: 6px 10px !important;
+    font-size: 18px;
+}
+
+/* 🔘 Bold red Calculate */
 .stButton > button {
     background-color: #E53935 !important;
     color: white !important;
@@ -66,41 +78,6 @@ body, .block-container {
 }
 .stButton > button:hover {
     background-color: #B71C1C !important;
-}
-
-/* 🧾 MATCHING TABLE STYLING FOR INPUT + OUTPUT */
-.table-box {
-    font-size: 18px;
-    font-weight: 500;
-}
-
-/* Make numerical tables neat + centered */
-[data-testid="stDataFrame"] table,
-.output-table table {
-    font-size: 18px !important;
-    width: 100%;
-}
-
-/* Center headers + values */
-[data-testid="stDataFrame"] th, .output-table th {
-    text-align: center !important;
-    font-weight: 700 !important;
-}
-[data-testid="stDataFrame"] td, .output-table td {
-    text-align: center !important;
-    padding: 6px 10px !important;
-}
-
-/* Row height */
-[data-testid="stDataFrame"] tr, .output-table tr {
-    height: 36px !important;
-}
-
-/* Index width adjust */
-[data-testid="stDataFrame"] thead th:first-child,
-[data-testid="stDataFrame"] tbody td:first-child {
-    width: 40px !important;
-    text-align: center !important;
 }
 
 </style>
@@ -118,34 +95,40 @@ def soft_tab(title, icon):
 col1, col_mid, col2 = st.columns([0.9, 0.9, 3])
 
 # ============================================================
-# 🟦 LEFT COLUMN — INPUT TABLE + CONTROLS
+# 🟦 LEFT COLUMN — FORMATTED INPUT TABLE + CONTROLS
 # ============================================================
 with col1:
     soft_tab("Input", "📥")
 
-    st.markdown("<div class='large-io'>Enter or edit your returns:</div>", unsafe_allow_html=True)
+    st.write("Enter or edit your returns:")
 
+    # Original data
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
         "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
     })
 
-    df = st.data_editor(default_df, use_container_width=True, hide_index=False)
+    # Input editor without index column
+    df = st.data_editor(
+        default_df,
+        use_container_width=True,
+        hide_index=True
+    )
 
     if df.isnull().any().any():
         st.warning("⚠ Please enter numeric % values for both X and Y.")
         st.stop()
 
+    # Convert to decimals
     df = df.astype(float) / 100
 
-    st.markdown("<br>", unsafe_allow_html=True)
     weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.01)
     weight_y = 1 - weight_x
 
     calculate = st.button("Calculate")
 
 # ============================================================
-# 🟨 MIDDLE COLUMN — OUTPUT TABLE
+# 🟨 MIDDLE COLUMN — MATCHING OUTPUT TABLE (NO INDEX)
 # ============================================================
 with col_mid:
     soft_tab("Output", "📊")
@@ -177,22 +160,20 @@ if calculate:
             "Portfolio Risk"
         ],
         "Value (%)": [
-            corr * 100,
-            mean_x * 100,
-            mean_y * 100,
-            sd_x * 100,
-            sd_y * 100,
-            port_return * 100,
-            port_sd * 100
+            f"{corr*100:.2f}%",
+            f"{mean_x*100:.2f}%",
+            f"{mean_y*100:.2f}%",
+            f"{sd_x*100:.2f}%",
+            f"{sd_y*100:.2f}%",
+            f"{port_return*100:.2f}%",
+            f"{port_sd*100:.2f}%"
         ]
     })
 
-    summary_df["Value (%)"] = summary_df["Value (%)"].map(lambda x: f"{x:.2f}%")
-
     with col_mid:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("<div class='table-box output-table'>", unsafe_allow_html=True)
-        st.table(summary_df)
+        st.markdown("<div class='table-box'>", unsafe_allow_html=True)
+        st.table(summary_df)  # no index automatically
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ================= GRAPH ================= #
@@ -208,7 +189,7 @@ if calculate:
         )
 
         plt.style.use("seaborn-v0_8-whitegrid")
-        fig, ax = plt.subplots(figsize=(7, 3.8))
+        fig, ax = plt.subplots(figsize=(7, 4))
 
         ax.plot(pf_sd*100, pf_returns*100, linewidth=2.0, color="#5E9BD4")
         ax.scatter(port_sd*100, port_return*100, color="#E53935", s=60)
