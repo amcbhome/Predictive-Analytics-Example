@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (Final + Column Fix)
+# 🌸 Diversification of Risk Dashboard (Final Polished Version)
 # ============================================================
 
 import streamlit as st
@@ -48,7 +48,7 @@ body, .block-container {
   box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
 }
 
-/* FORMULA AREA (NO BORDER/BOX) */
+/* FORMULA AREA CLEAN (NO BORDER/BOX) */
 .tab-card {
   padding: 0px;
   background-color: transparent;
@@ -95,7 +95,7 @@ def soft_tab(title, icon):
     st.markdown(f"<div class='soft-tab'>{icon} {title}</div>", unsafe_allow_html=True)
 
 # ============================================================
-# 📌 LAYOUT (NOW USING B: [0.6, 2.4])
+# 📌 LAYOUT (INPUT | OUTPUT) — Narrow Left Panel
 # ============================================================
 left, right = st.columns([0.6, 2.4])
 
@@ -104,7 +104,7 @@ left, right = st.columns([0.6, 2.4])
 # ============================================================
 with left:
 
-    soft_tab("Input Data (X & Y Returns)", "📥")
+    soft_tab("Input", "📥")
 
     # Default data (Watson & Head)
     default_df = pd.DataFrame({
@@ -129,10 +129,12 @@ with left:
 # ============================================================
 if calculate:
 
+    # Stats
     mean_x, mean_y = df.mean()
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
 
+    # Portfolio outputs
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
@@ -141,36 +143,36 @@ if calculate:
     with right:
         soft_tab("Efficient Frontier", "📈")
 
-        # —— Compact Responsive Equation Line ——
+        # —— Equation Line —— 
         st.markdown("<div class='tab-card'>", unsafe_allow_html=True)
         st.markdown(
             "<div class='calc-line'>"
             +
-            fr"$r = {corr:.2f}$"
-            " &nbsp;•&nbsp; "
+            fr"$r={corr:.2f}$"
+            " &nbsp;&nbsp;|&nbsp;&nbsp; "
             +
-            fr"$\bar{{X}} = {mean_x*100:.2f}\%$"
-            " "
+            fr"$\bar{{X}}={mean_x*100:.2f}\%$"
+            " , "
             +
-            fr"$\bar{{Y}} = {mean_y*100:.2f}\%$"
-            " &nbsp;•&nbsp; "
+            fr"$\bar{{Y}}={mean_y*100:.2f}\%$"
+            " &nbsp;&nbsp;|&nbsp;&nbsp; "
             +
-            fr"$\sigma_X = {sd_x*100:.2f}\%$"
-            " "
+            fr"$\sigma_X={sd_x*100:.2f}\%$"
+            " , "
             +
-            fr"$\sigma_Y = {sd_y*100:.2f}\%$"
-            " &nbsp;•&nbsp; "
+            fr"$\sigma_Y={sd_y*100:.2f}\%$"
+            " &nbsp;&nbsp;|&nbsp;&nbsp; "
             +
-            fr"$E(R_p) = {port_return*100:.2f}\%$"
-            " &nbsp;•&nbsp; "
+            fr"$E(R_p)={port_return*100:.2f}\%$"
+            " &nbsp;&nbsp;|&nbsp;&nbsp; "
             +
-            fr"$\sigma_p = {port_sd*100:.2f}\%$"
+            fr"$\sigma_p={port_sd*100:.2f}\%$"
             +
             "</div>",
             unsafe_allow_html=True
         )
 
-        # —— Efficient Frontier Plot ——
+        # —— Efficient Frontier Plot —— 
         w = np.linspace(0, 1, 50)
         pf_returns = w * mean_x + (1 - w) * mean_y
         pf_sd = np.sqrt(
@@ -181,13 +183,16 @@ if calculate:
 
         plt.style.use("seaborn-v0_8-whitegrid")
         fig, ax = plt.subplots(figsize=(7, 4))
+
         ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
         ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=50, label="Current Portfolio")
+
         ax.set_facecolor("#FFFFFF")
         ax.set_xlabel("Risk (Std Dev %)", fontsize=10)
         ax.set_ylabel("Expected Return (%)", fontsize=10)
         ax.tick_params(axis='both', labelsize=9)
         ax.legend(fontsize=9)
+
         st.pyplot(fig)
 
         st.markdown("</div>", unsafe_allow_html=True)
@@ -195,4 +200,5 @@ if calculate:
 # ============================================================
 # END OF APP
 # ============================================================
+======
 
