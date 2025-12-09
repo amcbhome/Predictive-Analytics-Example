@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk – Soft Tabs + Compact Output Line
+# 🌸 Diversification of Risk – Soft Tabs + Correct LaTeX Output
 # ============================================================
 
 import streamlit as st
@@ -21,7 +21,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🎨 PASTEL SOFT TAB THEME
+# 🎨 PASTEL THEME + SOFT TABS
 # ============================================================
 st.markdown("""
 <style>
@@ -49,7 +49,7 @@ body, .block-container {
   box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
 }
 
-/* TAB CARD UNDER HEADER */
+/* TAB CARD */
 .tab-card {
   border: 1.5px solid #D0DAE2;
   border-radius: 0px 10px 10px 10px;
@@ -80,7 +80,7 @@ div[data-baseweb="slider"] > div {
 """, unsafe_allow_html=True)
 
 # ============================================================
-# REUSABLE TAB FUNCTIONS
+# TAB HELPER
 # ============================================================
 def soft_tab(title, icon):
     st.markdown(f"<div class='soft-tab'>{icon} {title}</div>", unsafe_allow_html=True)
@@ -97,7 +97,7 @@ with left:
 
     soft_tab("Input Data (X & Y Returns)", "📥")
 
-    # Watson & Head Default Returns (editable by user)
+    # Watson & Head Default Returns
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
         "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
@@ -109,18 +109,16 @@ with left:
         st.warning("⚠ Please enter five numeric % values for both X and Y.")
         st.stop()
 
-    # Convert from % → decimal for calculations
+    # Convert % → decimal
     df = df.astype(float) / 100
 
-    # Portfolio weights
     weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
-    # Action button
     calculate = st.button("Calculate")
 
 # ============================================================
-# RIGHT PANEL — OUTPUT (ONLY AFTER CLICK)
+# RIGHT PANEL — OUTPUT
 # ============================================================
 if calculate:
 
@@ -142,27 +140,20 @@ if calculate:
         # START CARD
         st.markdown("<div class='tab-card'>", unsafe_allow_html=True)
 
-        # PASTEL SEPARATOR
-        sep = "<span style='color:#A3B4C4; font-size:18px;'>•</span>"
-
-        # 🎯 FINAL COMPACT STATS OUTPUT (with spacing)
-        st.markdown(f"""
-<div style='font-size:17px; line-height:2;'>
-\( r = {corr:.2f} \)
-&nbsp;&nbsp;{sep}&nbsp;&nbsp;
-\( \\bar{{X}} = {mean_x*100:.2f}\\% \)
-&nbsp;
-\( \\bar{{Y}} = {mean_y*100:.2f}\\% \)
-&nbsp;&nbsp;{sep}&nbsp;&nbsp;
-\( \\sigma_X = {sd_x*100:.2f}\\% \)
-&nbsp;
-\( \\sigma_Y = {sd_y*100:.2f}\\% \)
-&nbsp;&nbsp;{sep}&nbsp;&nbsp;
-\( E(R_p) = {port_return*100:.2f}\\% \)
-&nbsp;&nbsp;{sep}&nbsp;&nbsp;
-\( \\sigma_p = {port_sd*100:.2f}\\% \)
-</div>
-""", unsafe_allow_html=True)
+        # 🎯 ONE-LINE OUTPUT USING PURE MATHJAX (no HTML formatting)
+        st.write(
+            fr"$r = {corr:.2f}$"
+            " • "
+            fr"$\bar{{X}} = {mean_x*100:.2f}\%$"
+            fr"$\ \bar{{Y}} = {mean_y*100:.2f}\%$"
+            " • "
+            fr"$\sigma_X = {sd_x*100:.2f}\%$"
+            fr"$\ \sigma_Y = {sd_y*100:.2f}\%$"
+            " • "
+            fr"$E(R_p) = {port_return*100:.2f}\%$"
+            " • "
+            fr"$\sigma_p = {port_sd*100:.2f}\%$"
+        )
 
         # ───── Efficient Frontier Graph ─────
         w = np.linspace(0, 1, 50)
