@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk – Pastel Light Theme (Clean Final)
+# 🌸 Diversification of Risk – Pastel Light Theme (Final Algebra Version)
 # ============================================================
 
 import streamlit as st
@@ -31,7 +31,7 @@ body, .block-container {
     color: #36454F;
 }
 
-/* ===== CARD STYLING ===== */
+/* ===== CARD ===== */
 .card {
   border: 1.3px solid #D8DEE3;
   border-radius: 12px;
@@ -55,21 +55,9 @@ body, .block-container {
   color:#36454F !important;
 }
 
-/* ===== RADIO BUTTONS ===== */
-.stRadio > div { gap: 4px; }
-.stRadio label { color: #36454F !important; }
-
-/* ===== SLIDER (NO BACKGROUND) ===== */
+/* ===== SLIDER ===== */
 div[data-baseweb="slider"] > div {
-    background-color: transparent !important;
-}
-.stSlider label {color:#36454F !important;}
-
-/* ===== TABLE (NO SCROLL) ===== */
-[data-testid="stTable"], .stDataFrame iframe {
-    background-color: #FFFFFF !important;
-    color: #36454F !important;
-    border-radius: 8px;
+    background-color: transparent !important; /* No background */
 }
 
 /* ===== RED CALCULATE BUTTON ===== */
@@ -88,92 +76,93 @@ div[data-baseweb="slider"] > div {
 """, unsafe_allow_html=True)
 
 # ======== CARD FUNCTION ==========
-def card(title, icon, content=""):
+def card(title, icon, body_html=""):
     st.markdown(f"""
     <div class="card">
         <div class="card-header">{icon} {title}</div>
-        <div class="card-body">{content}</div>
+        <div class="card-body">
+            {body_html}
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
 # ============================================================
-# 2-COLUMN LAYOUT (Left = Inputs, Right = Outputs)
+# LAYOUT (LEFT INPUTS, RIGHT OUTPUTS)
 # ============================================================
 left, right = st.columns([1, 2])
 
 # ─────────────────────────────────────────────────────────────
-# LEFT COLUMN (INPUTS + CALCULATE BUTTON)
+# LEFT COLUMN (ONLY USER INPUT)
 # ─────────────────────────────────────────────────────────────
 with left:
 
     card("Input Data", "📥")
 
-    default_df = pd.DataFrame({
-        "X": [6.6, 5.6, -9.0, 12.6, 14.0],
-        "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
-    })
-
-    mode = st.radio("", ["Use Watson & Head", "Enter My Own"], label_visibility="collapsed")
-
-    # Show full table without scroll or height errors
-    if mode == "Use Watson & Head":
-        df = default_df.copy()
-        st.dataframe(df, use_container_width=True)
-    else:
-        df = st.data_editor(pd.DataFrame({"X":[None]*5, "Y":[None]*5}),
-                             num_rows="fixed", use_container_width=True)
+    # Force user to enter their own dataset
+    df = st.data_editor(
+        pd.DataFrame({"X":[None]*5, "Y":[None]*5}),
+        num_rows="fixed",
+        use_container_width=True
+    )
 
     if df.isnull().any().any():
-        st.warning("⚠ Please enter 5 values for BOTH X and Y.")
+        st.warning("⚠ Please enter 5 numeric percentage values for BOTH X and Y.")
         st.stop()
 
-    # Convert % → decimals
+    # Convert % → decimal numbers
     df = df.astype(float) / 100
 
-    # Weight slider (bottom of column)
-    weight_x = st.slider("Weight in Asset X", 0.0, 1.0, 0.5, 0.05)
+    # Weight slider
+    weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
-    # RED CALCULATE BUTTON
+    # Calculate button
     calculate = st.button("Calculate")
 
 # ─────────────────────────────────────────────────────────────
-# RIGHT COLUMN (OUTPUTS SHOWN ONLY AFTER CLICK)
+# RIGHT COLUMN OUTPUT (ONLY AFTER CLICK)
 # ─────────────────────────────────────────────────────────────
 if calculate:
 
-    # Portfolio statistics
+    # Statistics
     mean_x, mean_y = df.mean()
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
 
+    # Portfolio formulas
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) + \
                (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
+    # Efficient Frontier Card
     with right:
-        # Open card
         st.markdown("""
         <div class='card'>
             <div class='card-header'>📈 Efficient Frontier</div>
             <div class='card-body'>
         """, unsafe_allow_html=True)
 
-        # Correlation displayed under header
-        st.markdown(f"<b>Correlation (r):</b> {corr:.2f}", unsafe_allow_html=True)
+        # Algebraic Statistics Row
+        st.markdown(f"""
+        <b>Correlation (r):</b> {corr:.2f}<br><br>
 
-        # Efficient frontier graph
+        <b>Mean Returns:</b>  \( \bar{{X}} = {mean_x*100:.2f}\%, \quad \bar{{Y}} = {mean_y*100:.2f}\% \)<br>
+        <b>Risk (Std Dev):</b>  \( \sigma_X = {sd_x*100:.2f}\%, \quad \sigma_Y = {sd_y*100:.2f}\% \)<br><br>
+
+        <b>Portfolio Expected Return:</b>  \( E(R_p) = w_X\bar{{X}} + w_Y\bar{{Y}} \)<br>
+        <b>Portfolio Risk:</b>  \( \sigma_p = \sqrt{{ w_X^2\sigma_X^2 + w_Y^2\sigma_Y^2 + 2w_Xw_Y\sigma_X\sigma_Y r }} \)
+        """, unsafe_allow_html=True)
+
+        # Frontier Graph
         w = np.linspace(0, 1, 50)
         pf_returns = w * mean_x + (1-w) * mean_y
         pf_sd = np.sqrt(w**2*sd_x**2 + (1-w)**2*sd_y**2 + 2*w*(1-w)*sd_x*sd_y*corr)
 
         plt.style.use("seaborn-v0_8-whitegrid")
         fig, ax = plt.subplots(figsize=(8,5))
-        ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4",
-                label="Efficient Frontier")
-        ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=60,
-                   label="Current Portfolio")
+        ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
+        ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=60, label="Current Portfolio")
 
         ax.set_facecolor("#FFFFFF")
         ax.set_xlabel("Risk (Std Dev %)")
@@ -181,9 +170,10 @@ if calculate:
         ax.legend()
         st.pyplot(fig)
 
-        # Close card wrapper
+        # Close card border
         st.markdown("</div></div>", unsafe_allow_html=True)
 
 # ============================================================
 # END OF APP
 # ============================================================
+
