@@ -84,8 +84,7 @@ if st.sidebar.button("Calculate Efficient Frontier"):
     with colM:
         st.markdown("### Metrics Summary")
 
-        # Arrow logic (no colors)
-        arrow_ret = "⬆️" if user_return > max(mean_X, mean_Y) else "⬇️"
+        # Arrow logic only for risk
         arrow_risk = "⬇️" if user_risk < min(sd_X, sd_Y) else "⬆️"
 
         st.markdown(f"""
@@ -95,7 +94,7 @@ if st.sidebar.button("Calculate Efficient Frontier"):
         **Std Dev (Y):** {sd_Y:.2f}  
         **Correlation (X,Y):** {corr_XY:.2f}  
 
-        **Portfolio Expected Return:** {user_return:.2f}% {arrow_ret}  
+        **Portfolio Expected Return:** {user_return:.2f}%  
         **Portfolio Risk (Std Dev):** **{user_risk:.2f} {arrow_risk}**
         """)
 
