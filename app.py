@@ -21,6 +21,7 @@ default_data = pd.DataFrame({
 # ---------------------------------
 st.markdown("""
 <style>
+
 /* Page Title */
 h1 {
     font-size: 36px !important;
@@ -59,16 +60,25 @@ h1 {
     text-align: center;
 }
 
-/* Compact Inputs */
-.input-row {
-    margin-bottom: 1px !important;
+/* 🔽 Compact Inputs Height */
+input[type="number"] {
+    height: 26px !important;
+    min-height: 26px !important;
+    padding: 0px !important;
+    font-size: 14px !important;
+    text-align: center !important;
 }
 
-input[type="number"] {
-    height: 32px !important;
-    padding: 2px 2px !important;
-    font-size: 16px !important;
-    text-align: center !important;
+/* 🔽 Reduce Vertical Spacing */
+.input-row {
+    margin-bottom: -3px !important;
+    padding-bottom: 0px !important;
+}
+
+/* Remove top/bottom padding around columns */
+[data-testid="column"] {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
 }
 
 /* Weight Label */
@@ -107,13 +117,12 @@ with col1:
     st.markdown("<div class='section-title'>📥 Input</div>", unsafe_allow_html=True)
     st.write("Enter or edit your returns:")
 
-    # Editable numeric inputs (compact)
     edited_data = {}
     for i in range(len(default_data)):
         st.markdown("<div class='input-row'>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
-        x_val = c1.number_input(f" ", value=float(default_data.loc[i,"X"]), key=f"x{i}", format="%.2f")
-        y_val = c2.number_input(f" ", value=float(default_data.loc[i,"Y"]), key=f"y{i}", format="%.2f")
+        x_val = c1.number_input(" ", value=float(default_data.loc[i,"X"]), key=f"x{i}", format="%.2f", label_visibility="collapsed")
+        y_val = c2.number_input(" ", value=float(default_data.loc[i,"Y"]), key=f"y{i}", format="%.2f", label_visibility="collapsed")
         edited_data[i] = [x_val, y_val]
         st.markdown("</div>", unsafe_allow_html=True)
 
