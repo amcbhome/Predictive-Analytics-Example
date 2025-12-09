@@ -105,15 +105,20 @@ if st.sidebar.button("Calculate Efficient Frontier"):
         fig, ax = plt.subplots(figsize=(8, 4))
         ax.plot(ef_risk, ef_returns, linewidth=2)
 
-        # Assets
-        ax.scatter(sd_X, mean_X, color='blue', s=80)
-        ax.text(sd_X, mean_X, " X", fontsize=9, color='blue')
-        ax.scatter(sd_Y, mean_Y, color='red', s=80)
-        ax.text(sd_Y, mean_Y, " Y", fontsize=9, color='red')
+        # Label style (bigger, bold)
+        label_font = {'fontsize': 11, 'fontweight': 'bold'}
+
+        # Asset X
+        ax.scatter(sd_X, mean_X, color='blue', s=100)
+        ax.text(sd_X + 0.02, mean_X + 0.1, "X", color='blue', **label_font)
+
+        # Asset Y
+        ax.scatter(sd_Y, mean_Y, color='red', s=100)
+        ax.text(sd_Y + 0.02, mean_Y + 0.1, "Y", color='red', **label_font)
 
         # Portfolio point
-        ax.scatter(user_risk, user_return, color='green', s=100)
-        ax.text(user_risk, user_return, "  Portfolio", fontsize=9, color='green')
+        ax.scatter(user_risk, user_return, color='green', s=120)
+        ax.text(user_risk + 0.02, user_return + 0.1, "Portfolio", color='green', **label_font)
 
         ax.set_xlabel("Risk (Std. Deviation)")
         ax.set_ylabel("Return (%)")
