@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (Final Version)
+# 🌸 Diversification of Risk Dashboard (Responsive Version)
 # ============================================================
 
 import streamlit as st
@@ -26,7 +26,6 @@ st.markdown("""
 st.markdown("""
 <style>
 
-/* BACKGROUND */
 body, .block-container {
     background-color: #FAFAFA;
     font-family: 'Segoe UI', sans-serif;
@@ -49,13 +48,12 @@ body, .block-container {
   box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
 }
 
-/* TAB CARD */
+/* CARD UNDER TAB (reduced padding, no gap) */
 .tab-card {
   border: 1.5px solid #D0DAE2;
   border-radius: 0px 10px 10px 10px;
   background-color: #FFFFFF;
-  padding: 14px 18px;
-  margin-top: -10px;
+  padding: 6px 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
@@ -97,7 +95,7 @@ with left:
 
     soft_tab("Input Data (X & Y Returns)", "📥")
 
-    # Default Watson & Head data (editable)
+    # Default data (Watson & Head)
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
         "Y": [24.5, -5.9, 19.9, -7.8, 14.8]
@@ -109,14 +107,11 @@ with left:
         st.warning("⚠ Please enter five numeric % values for both X and Y.")
         st.stop()
 
-    # Convert % → decimal
     df = df.astype(float) / 100
 
-    # Portfolio weights
     weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
-    # Action button
     calculate = st.button("Calculate")
 
 # ============================================================
@@ -124,12 +119,12 @@ with left:
 # ============================================================
 if calculate:
 
-    # --- Summary Stats ---
+    # Stats
     mean_x, mean_y = df.mean()
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
 
-    # --- Portfolio Calculations ---
+    # Portfolio
     port_return = weight_x * mean_x + weight_y * mean_y
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
@@ -141,24 +136,37 @@ if calculate:
         # CARD START
         st.markdown("<div class='tab-card'>", unsafe_allow_html=True)
 
-        # 🎯 FINAL ONE-LINE MATHJAX OUTPUT (NO HTML WRAPPING)
+        # 📌 Responsive one-line math
+        st.markdown("""
+<div style="
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    font-size:15px;
+    line-height:1.6;
+">
+""", unsafe_allow_html=True)
+
         st.markdown(
             fr"$r = {corr:.2f}$"
-            " &nbsp;&nbsp;•&nbsp;&nbsp; "
+            " &nbsp;•&nbsp; "
             fr"$\bar{{X}} = {mean_x*100:.2f}\%$"
             " "
             fr"$\bar{{Y}} = {mean_y*100:.2f}\%$"
-            " &nbsp;&nbsp;•&nbsp;&nbsp; "
+            " &nbsp;•&nbsp; "
             fr"$\sigma_X = {sd_x*100:.2f}\%$"
             " "
             fr"$\sigma_Y = {sd_y*100:.2f}\%$"
-            " &nbsp;&nbsp;•&nbsp;&nbsp; "
+            " &nbsp;•&nbsp; "
             fr"$E(R_p) = {port_return*100:.2f}\%$"
-            " &nbsp;&nbsp;•&nbsp;&nbsp; "
+            " &nbsp;•&nbsp; "
             fr"$\sigma_p = {port_sd*100:.2f}\%$"
         )
 
-        # --- Efficient Frontier Plot ---
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # GRAPH
         w = np.linspace(0, 1, 50)
         pf_returns = w * mean_x + (1 - w) * mean_y
         pf_sd = np.sqrt(w**2 * sd_x**2 + (1 - w)**2 * sd_y**2 +
@@ -174,7 +182,6 @@ if calculate:
         ax.legend()
         st.pyplot(fig)
 
-        # CARD END
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================================================
