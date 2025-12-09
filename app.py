@@ -3,115 +3,95 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# ──────────────────────────────────────────────────────────────
-# Page setup
-# ──────────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="Diversification of Risk Calculator",
-    layout="centered"  # Always open in centered view
-)
+st.set_page_config(page_title="Diversification App", layout="wide")
+st.title("📊 Diversification of Risk – All-in-One Dashboard")
 
-st.title("📊 Diversification of Risk Calculator")
+# ============================================================
+# LAYOUT GRID (3 columns)
+# ============================================================
+col1, col2, col3 = st.columns([1.2, 1, 1.5])   # width ratios
 
-st.markdown("""
-This interactive calculator demonstrates **Modern Portfolio Theory (MPT)**  
-using a default dataset from *Watson & Head (2023)*.
+# ─────────────────────────────────────────────────────────────
+#  COLUMN 1 → DATA + RESULTS TABLE
+# ─────────────────────────────────────────────────────────────
+with col1:
+    st.subheader("📥 Enter Data")
+    default_df = pd.DataFrame({
+        "S": [6.6, 5.6, -9.0, 12.6, 14.0],
+        "T": [24.5, -5.9, 19.9, -7.8, 14.8]
+    })
+    
+    mode = st.radio("", ["Use Watson & Head Data", "Enter My Own"], label_visibility="collapsed")
 
-Enter or edit **5 years of annual returns (%)** for **S** and **T**.
-""")
+    if mode == "Use Watson & Head Data":
+        df = default_df.copy()
+        st.dataframe(df, use_container_width=True)
+    else:
+        df = st.data_editor(pd.DataFrame({"S":[None]*5, "T":[None]*5}),
+                             num_rows="fixed", use_container_width=True)
 
-# ──────────────────────────────────────────────────────────────
-# Step 1 – Input Data
-# ──────────────────────────────────────────────────────────────
-st.subheader("Step 1 – Input Data")
+    if df.isnull().any().any():
+        st.warning("Enter 5 values for S and T to continue.")
+        st.stop()
 
-# Watson & Head (2023) test data – Corporate Finance (8th Edition)
-watson_head_data = pd.DataFrame({
-    "S return (%)": [6.6, 5.6, -9.0, 12.6, 14.0],
-    "T return (%)": [24.5, -5.9, 19.9, -7.8, 14.8]
-})
+    df = df.astype(float) / 100  # convert % to decimals
 
-data_choice = st.radio(
-    "Choose input mode:",
-    ["Default test data", "Enter my own data"]
-)
-
-if data_choice == "Default test data":
-    st.markdown("**Default dataset:**")
-    st.dataframe(watson_head_data, use_container_width=True)
-    df = watson_head_data.rename(columns={"S return (%)": "S", "T return (%)": "T"}).copy()
-else:
-    st.write("Enter or edit your own 5-year returns below:")
-    df = st.data_editor(
-        pd.DataFrame({"S": [None]*5, "T": [None]*5}),
-        num_rows="fixed",
-        use_container_width=True
-    )
-
-# ──────────────────────────────────────────────────────────────
-# Step 2 – Run Analysis
-# ──────────────────────────────────────────────────────────────
-if st.button("Run Analysis", type="primary"):
-    df = df.dropna()
-    df = df.astype(float) / 100  # convert % → decimal
-
-    mean_s, mean_t = df["S"].mean(), df["T"].mean()
-    sd_s, sd_t = df["S"].std(ddof=0), df["T"].std(ddof=0)
+    # stats
+    mean_s, mean_t = df.mean()
+    sd_s, sd_t = df.std(ddof=0)
     corr = df["S"].corr(df["T"])
 
-    st.success("✅ Calculation complete.")
-
-    # Summary Statistics
-    st.subheader("Summary Statistics")
+    # TABLE OUTPUT
+    st.subheader("📊 Results Table")
     summary = pd.DataFrame({
-        "Mean Return": [f"{mean_s*100:.2f}%", f"{mean_t*100:.2f}%"],
-        "Standard Deviation": [f"{sd_s*100:.2f}%", f"{sd_t*100:.2f}%"]
-    }, index=["S", "T"])
+        "Mean Return (%)": [mean_s*100, mean_t*100],
+        "Std Dev (%)": [sd_s*100, sd_t*100]
+    }, index=["S", "T"]).round(2)
     st.dataframe(summary, use_container_width=True)
-    st.metric("Correlation (r)", f"{corr:.2f}")
+    
 
-    # Portfolio weights – Watson & Head pattern
-    weights = [(1.0, 0.0), (0.8, 0.2), (0.6, 0.4), (0.4, 0.6), (0.2, 0.8), (0.0, 1.0)]
-    labels = ["All S (100/0)", "A (80/20)", "B (60/40)", "C (40/60)", "D (20/80)", "All T (0/100)"]
+# ─────────────────────────────────────────────────────────────
+#  COLUMN 2 → CORRELATION + WEIGHTS
+# ─────────────────────────────────────────────────────────────
+with col2:
+    st.subheader("🔗 Correlation")
+    st.metric("r (S,T)", f"{corr:.2f}")
 
-    results = []
-    sd_values = []
-    for (w_s, w_t), label in zip(weights, labels):
-        port_return = w_s * mean_s + w_t * mean_t
-        port_var = w_s**2 * sd_s**2 + w_t**2 * sd_t**2 + 2*w_s*w_t*sd_s*sd_t*corr
-        port_sd = np.sqrt(port_var)
-        sd_values.append(port_sd)
-        results.append([label, f"{port_return*100:.2f}%", f"{port_sd*100:.2f}%"])
+    st.subheader("⚖️ Portfolio Weights")
+    weight_s = st.slider("Weight in Asset S", 0.0, 1.0, 0.5, 0.05)
+    weight_t = 1 - weight_s
+    st.write(f"**S = {weight_s:.2f}**, **T = {weight_t:.2f}**")
 
-    table_df = pd.DataFrame(results, columns=["Portfolio", "Mean Return (%)", "Standard Deviation (%)"])
+    # Calculate current portfolio stats
+    port_return = weight_s * mean_s + weight_t * mean_t
+    port_var = (weight_s**2 * sd_s**2) + (weight_t**2 * sd_t**2) + \
+               (2 * weight_s * weight_t * sd_s * sd_t * corr)
+    port_sd = np.sqrt(port_var)
 
-    # Portfolio Risk & Return Table
-    st.subheader("Step 2 – Portfolio Risk and Return")
-    st.dataframe(table_df, use_container_width=True)
+    st.metric("Portfolio Risk (Std Dev %)", f"{port_sd*100:.2f}")
 
-    # Efficient Frontier
-    st.subheader("Step 3 – Portfolio options")
-    x = [float(v.strip('%')) for v in table_df["Standard Deviation (%)"]]
-    y = [float(v.strip('%')) for v in table_df["Mean Return (%)"]]
-    fig, ax = plt.subplots(figsize=(7, 5))
-    ax.plot(x, y, marker="o")
-    for i, row in table_df.iterrows():
-        ax.annotate(row["Portfolio"], (x[i], y[i]), fontsize=8)
-    ax.set_xlabel("Risk (Standard Deviation %)")
+
+# ─────────────────────────────────────────────────────────────
+#  COLUMN 3 → GRAPH
+# ─────────────────────────────────────────────────────────────
+with col3:
+    st.subheader("📈 Efficient Frontier")
+
+    # smooth curve
+    w = np.linspace(0, 1, 50)
+    pf_returns = w * mean_s + (1-w) * mean_t
+    pf_sd = np.sqrt(w**2*sd_s**2 + (1-w)**2*sd_t**2 + 2*w*(1-w)*sd_s*sd_t*corr)
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.plot(pf_sd*100, pf_returns*100, label="Efficient Frontier")
+    ax.scatter(port_sd*100, port_return*100, color="red", label="Current Portfolio")
+    ax.set_xlabel("Risk (Std Dev %)")
     ax.set_ylabel("Expected Return (%)")
     ax.grid(True)
+    ax.legend()
     st.pyplot(fig)
 
-    # ──────────────────────────────────────────────────────────────
-    # Step 4 – Diversification Benefit
-    # ──────────────────────────────────────────────────────────────
-    min_portfolio_risk = min(sd_values) * 100
-    s_risk_reduction = sd_s * 100 - min_portfolio_risk
-    t_risk_reduction = sd_t * 100 - min_portfolio_risk
+    # diversification message
+    min_risk = min(pf_sd) * 100
+    st.success(f"Minimum achievable risk: **{min_risk:.2f}%**")
 
-    st.subheader("Step 4 – Analysis")
-   
-    st.info(
-        f"📉 Minimum portfolio risk: **{min_portfolio_risk:.2f}%**, "
-        f"compared to S (**{sd_s*100:.2f}%**) and T (**{sd_t*100:.2f}%**). "
-    )
