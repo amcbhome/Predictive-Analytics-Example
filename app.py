@@ -4,6 +4,7 @@
 
 import streamlit as st
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 from reportlab.pdfgen import canvas
@@ -12,105 +13,36 @@ from reportlab.lib.pagesizes import A4
 st.set_page_config(page_title="Efficient Frontier Portfolio App", layout="wide")
 
 # ===============================================================
-#                SIDEBAR INPUT TABLE (NO +/- BUTTONS)
+#          SIDEBAR DATAFRAME INPUT  (NO CSS NEEDED)
 # ===============================================================
 
 st.sidebar.title("Portfolio Inputs")
 st.sidebar.markdown("### Return Inputs")
 
-# ---- CSS FOR ALIGNMENT & REMOVING SPINNERS ----
-st.sidebar.markdown("""
-<style>
+# Default textbook dataset (as editable table)
+df_default = pd.DataFrame({
+    "X (%)": [6.6, 5.6, -9.0, 12.6, 14.0],
+    "Y (%)": [24.5, -5.9, 19.9, -7.8, 14.8]
+})
+df_default.index = df_default.index + 1  # Obs 1–5
 
-.return-table-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    height: 28px !important;
-    margin-bottom: 3px !important;
-}
-
-.return-table-header {
-    display: flex;
-    flex-direction: row;
-    font-weight: bold;
-    justify-content: space-between;
-    padding-bottom: 4px;
-}
-
-.return-obs {
-    width: 32px;
-    text-align: center;
-}
-
-.return-input {
-    width: 80px;
-}
-
-/* Remove +/- buttons */
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-input[type=number] {
-    -moz-appearance: textfield;
-    text-align: right !important;
-    padding-right: 6px !important;
-    height: 26px !important;
-    font-size: 13px !important;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ---- Header ----
-st.sidebar.markdown(
-    "<div class='return-table-header'><div class='return-obs'>Obs</div>"
-    "<div class='return-input'>X (%)</div><div class='return-input'>Y (%)</div></div>",
-    unsafe_allow_html=True
+# Editable dataframe in sidebar
+df = st.sidebar.data_editor(
+    df_default,
+    use_container_width=True,
+    key="returns_table"
 )
 
-# ---- Default textbook dataset ----
-default_X = [6.6, 5.6, -9.0, 12.6, 14.0]
-default_Y = [24.5, -5.9, 19.9, -7.8, 14.8]
+# Extract updated values
+X = df["X (%)"].to_numpy()
+Y = df["Y (%)"].to_numpy()
 
-X, Y = [], []
-
-# ---- Rows 1–5 Inputs ----
-for i in range(5):
-    st.sidebar.markdown(
-        f"<div class='return-table-row'><div class='return-obs'>{i+1}</div>",
-        unsafe_allow_html=True
-    )
-    colX, colY = st.sidebar.columns([1,1])
-
-    # IMPORTANT: use st.number_input NOT st.sidebar.number_input
-    with colX:
-        X.append(st.number_input(f"x{i}", value=default_X[i], step=None,
-                                 format="%.2f", label_visibility="collapsed"))
-    with colY:
-        Y.append(st.number_input(f"y{i}", value=default_Y[i], step=None,
-                                 format="%.2f", label_visibility="collapsed"))
-
-    st.sidebar.markdown("</div>", unsafe_allow_html=True)
-
-# ---- Row 6 Weight Slider ----
-st.sidebar.markdown(
-    f"<div class='return-table-row'><div class='return-obs'>6</div>"
-    f"<div style='flex:1; padding-left:5px;'>Weight of X,Y:</div></div>",
-    unsafe_allow_html=True
-)
-w_x_slider = st.sidebar.slider("", 0, 100, 50, 1)
-w_user = w_x_slider / 100
-
-X = np.array(X)
-Y = np.array(Y)
+# Weight slider
+w_x_slider = st.sidebar.slider("Weight of X (%)", 0, 100, 50, 1)
+w_user = w_x_slider / 100  # convert to decimal
 
 # ===============================================================
-#                    PORTFOLIO FUNCTIONS
+#          PORTFOLIO FUNCTIONS
 # ===============================================================
 
 def portfolio_return(w, r1, r2):
@@ -121,25 +53,29 @@ def portfolio_risk(w, sd1, sd2, corr):
     return np.sqrt(w**2 * sd1**2 + (1 - w)**2 * sd2**2 + 2 * w * (1 - w) * cov)
 
 # ===============================================================
-#                          OUTPUT SECTION
+#                CALCULATE AND DISPLAY OUTPUT
 # ===============================================================
 
 if st.sidebar.button("Calculate Efficient Frontier"):
 
+    # Calculate stats
     mean_X, mean_Y = X.mean(), Y.mean()
     sd_X, sd_Y = X.std(ddof=1), Y.std(ddof=1)
     corr_XY = np.corrcoef(X, Y)[0][1]
 
+    # Frontier curve
     W = np.linspace(0, 1, 100)
     ef_returns = portfolio_return(W, mean_X, mean_Y)
     ef_risk = portfolio_risk(W, sd_X, sd_Y, corr_XY)
 
+    # User portfolio
     user_return = portfolio_return(w_user, mean_X, mean_Y)
     user_risk = portfolio_risk(w_user, sd_X, sd_Y, corr_XY)
 
+    # Layout columns
     colM, colG = st.columns([1, 2])
 
-    # ---- METRICS PANEL ----
+    # ------- METRICS PANEL --------
     with colM:
         st.markdown("### Metrics Summary")
         st.markdown(f"""
@@ -155,11 +91,11 @@ Your Risk (Std Dev):   {user_risk:.4f}
         </pre>
         """, unsafe_allow_html=True)
 
-    # ---- PLOT ----
+    # ------- GRAPH --------
     with colG:
         st.markdown("## Efficient Frontier (X & Y Assets)")
-        fig, ax = plt.subplots(figsize=(8, 4))
 
+        fig, ax = plt.subplots(figsize=(8, 4))
         ax.plot(ef_risk, ef_returns, linewidth=2)
         ax.scatter(sd_X, mean_X, color='blue', s=80)
         ax.text(sd_X, mean_X, " X", fontsize=9, color='blue')
@@ -171,9 +107,10 @@ Your Risk (Std Dev):   {user_risk:.4f}
         ax.set_xlabel("Risk (Std. Deviation)")
         ax.set_ylabel("Return (%)")
         ax.grid(True, linestyle="--", alpha=0.5)
+
         st.pyplot(fig)
 
-    # ---- PDF EXPORT ----
+    # ------- PDF EXPORT ------
     def create_pdf():
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=A4)
@@ -182,11 +119,9 @@ Your Risk (Std Dev):   {user_risk:.4f}
         p.drawString(50, 800, "Portfolio Efficient Frontier Report")
 
         p.setFont("Helvetica", 12)
-        p.drawString(50, 770, "Report will contain metrics, chart and explanation...")
-        p.drawString(50, 750, "Full content to be added later.")
-
-        p.drawString(50, 720, f"Expected Return: {user_return:.2f}%")
-        p.drawString(50, 700, f"Portfolio Risk (Std Dev): {user_risk:.4f}")
+        p.drawString(50, 770, "Report fields and chart will be expanded later.")
+        p.drawString(50, 750, f"Expected Return: {user_return:.2f}%")
+        p.drawString(50, 730, f"Portfolio Risk (Std Dev): {user_risk:.4f}")
 
         p.showPage()
         p.save()
@@ -200,27 +135,6 @@ Your Risk (Std Dev):   {user_risk:.4f}
         mime="application/pdf"
     )
 
+# ------- if not yet pressed -------
 else:
     st.info("Select weights and press **Calculate Efficient Frontier** from the sidebar.")
-
-# ===============================================================
-#          AUTO-APPLY 2 DP FORMATTING ON INPUT BLUR
-# ===============================================================
-st.markdown("""
-<script>
-function formatDecimalInputs(){
-  const inputs = document.querySelectorAll('input[type="number"]');
-  inputs.forEach(input => {
-    input.addEventListener('blur', event => {
-      let value = parseFloat(event.target.value);
-      if (!isNaN(value)){
-        event.target.value = value.toFixed(2);
-      } else {
-        event.target.value = "0.00";
-      }
-    });
-  });
-}
-formatDecimalInputs();
-</script>
-""", unsafe_allow_html=True)
