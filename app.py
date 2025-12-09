@@ -1,6 +1,5 @@
-
 # ============================================================
-# 🌸 Diversification of Risk – Pastel Light Theme (X–Y + Calculate Button)
+# 🌸 Diversification of Risk – Pastel Light Theme (No Middle Column)
 # ============================================================
 
 import streamlit as st
@@ -65,33 +64,29 @@ h1,h2,h3,h4,p,div, label, span {
   color:#36454F !important;
 }
 
-/* ===== RADIO BUTTONS ===== */
-.stRadio > div { gap: 4px; }
-.stRadio label { color: #36454F !important; }
-
-/* ===== SLIDER ===== */
+/* ===== SLIDER REMOVE BACKGROUND ===== */
 div[data-baseweb="slider"] > div {
-    background-color: #82C7A5 !important;
+    background-color: transparent !important;
 }
+.stSlider label {color:#36454F !important;}
 
-/* ===== TABLE ===== */
+/* ===== DATA TABLE ===== */
 [data-testid="stTable"], .stDataFrame iframe {
     background-color: #FFFFFF !important;
     color: #36454F !important;
     border-radius: 8px;
 }
 
-/* ===== BUTTON ===== */
+/* ===== RED CALCULATE BUTTON ===== */
 .stButton > button {
-    background-color: #82C7A5;
-    color: #36454F;
+    background-color: #E57373 !important;
+    color: white !important;
     border-radius: 8px;
     font-weight: 600;
-    border: 1px solid #6EB695;
+    border: 1px solid #CC5B5B !important;
 }
 .stButton > button:hover {
-    background-color: #6EB695;
-    color: white;
+    background-color: #CC5B5B !important;
 }
 
 </style>
@@ -109,9 +104,9 @@ def card(title, icon, content=""):
 
 
 # ============================================================
-# GRID LAYOUT (3 Columns)
+# GRID LAYOUT (NOW 2 COLUMNS ONLY)
 # ============================================================
-left, middle, right = st.columns([1.2, 1, 1.4])
+left, right = st.columns([1, 2])
 
 # ─────────────────────────────────────────────────────────────
 # LEFT COLUMN → INPUT + CALCULATE BUTTON
@@ -137,23 +132,22 @@ with left:
         st.warning("⚠ Please enter 5 values for BOTH X and Y.")
         st.stop()
 
-    # Convert % to decimals for calculations
+    # Convert % to decimals
     df = df.astype(float) / 100
-
-    # Weight slider at bottom
+    
+    # Slider (background removed)
     weight_x = st.slider("Weight in Asset X", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
-
-    # Calculate button
-    go = st.button("Calculate")
+    
+    # Red calculate button
+    calculate = st.button("Calculate")
 
 
 # ============================================================
-# ONLY SHOW RESULTS IF BUTTON IS CLICKED
+# SHOW RESULTS ONLY WHEN CALCULATE IS CLICKED
 # ============================================================
-if go:
+if calculate:
 
-    # Compute stats
     mean_x, mean_y = df.mean()
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
@@ -163,22 +157,27 @@ if go:
                (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
-    # === MIDDLE COLUMN ===
-    with middle:
-        card("Correlation Analysis", "🔗",
-             f"<b>Correlation (r):</b> {corr:.2f}")
-
-    # === RIGHT COLUMN ===
+    # === RIGHT COLUMN OUTPUT ===
     with right:
-        card("Efficient Frontier", "📈")
+        # Card Header
+        st.markdown("""
+        <div class='card'>
+            <div class='card-header'>📈 Efficient Frontier</div>
+        """, unsafe_allow_html=True)
 
-        # Efficient frontier
+        # Correlation printed under header
+        st.markdown(f"""
+        <div class='card-body'>
+            <b>Correlation (r):</b> {corr:.2f}
+        """, unsafe_allow_html=True)
+
+        # === GRAPH ===
         w = np.linspace(0, 1, 50)
         pf_returns = w * mean_x + (1-w) * mean_y
         pf_sd = np.sqrt(w**2*sd_x**2 + (1-w)**2*sd_y**2 + 2*w*(1-w)*sd_x*sd_y*corr)
 
         plt.style.use("seaborn-v0_8-whitegrid")
-        fig, ax = plt.subplots(figsize=(6,4))
+        fig, ax = plt.subplots(figsize=(7,4))
         ax.plot(pf_sd*100, pf_returns*100, linewidth=2, color="#5E9BD4", label="Efficient Frontier")
         ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=60, label="Current Portfolio")
 
@@ -188,9 +187,12 @@ if go:
         ax.legend()
         st.pyplot(fig)
 
-        min_risk = min(pf_sd) * 100
+        # Close the card container after the plot
+        st.markdown("</div></div>", unsafe_allow_html=True)
+
+        # DIVERSIFICATION SUMMARY BOX
         card("Diversification Benefit", "📉",
-             f"<b>Minimum achievable risk:</b> {min_risk:.2f}%<br>"
+             f"<b>Minimum achievable risk:</b> {min(pf_sd)*100:.2f}%<br>"
              f"(X = {sd_x*100:.2f}%, Y = {sd_y*100:.2f}%)")
 
 # ============================================================
