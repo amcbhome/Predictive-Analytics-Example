@@ -1,5 +1,5 @@
 # ============================================================
-# 🌸 Diversification of Risk Dashboard (Line-by-Line Output)
+# 🌸 Diversification of Risk Dashboard (Large Input/Output Text)
 # ============================================================
 
 import streamlit as st
@@ -18,11 +18,12 @@ st.markdown("""
     font-family: Segoe UI, sans-serif;
     font-weight: 650;
     margin-bottom: 0;
+    font-size: 32px;
 '>📊 Diversification of Risk Dashboard</h1>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🎨 FULL RESPONSIVE PASTEL THEME + STANDARDIZED TEXT
+# 🎨 STYLE: PASTEL + LARGER I/O TEXT (18px)
 # ============================================================
 st.markdown("""
 <style>
@@ -31,15 +32,25 @@ body, .block-container {
     background-color: #FAFAFA;
     font-family: 'Segoe UI', sans-serif;
     color: #36454F;
-    font-size: 14px;  /* STANDARD TEXT SIZE */
 }
 
-/* SOFT TAB HEADER */
+/* 🔹 STANDARD APP TEXT REMAINS */
+body, .block-container, .stMarkdown, .stText, .stSlider {
+    font-size: 14px;
+}
+
+/* 🔸 ENLARGED INPUT + OUTPUT TEXT */
+.large-io {
+    font-size: 18px !important;
+    font-weight: 500;
+}
+
+/* 🏷️ Soft Tab Headers */
 .soft-tab {
   display: inline-block;
   padding: 8px 16px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
   border: 1.5px solid #D0DAE2;
   background-color: #E8F3FF;
   color: #336699 !important;
@@ -48,19 +59,24 @@ body, .block-container {
   margin-bottom: 0;
 }
 
-/* LINE-BY-LINE CLEAN OUTPUT */
+/* 🧮 Output Lines */
 .output-line {
-    font-size: 14px;  /* SAME AS APP */
+    font-size: 18px !important;
     line-height: 1.4;
-    margin: 2px 0;
+    margin: 4px 0;
 }
 
-/* SLIDER BACKGROUND REMOVED */
-div[data-baseweb="slider"] > div {
-    background-color: transparent !important;
+/* 🛠 Increase slider label + values */
+.stSlider label, .stSlider .css-1y4p8pa {
+    font-size: 18px !important;
 }
 
-/* RED BUTTON */
+/* 🧾 Data Editor font increase */
+[data-testid="stDataFrame"] * {
+    font-size: 18px !important;
+}
+
+/* 🔘 Red Button */
 .stButton > button {
     background-color: #E57373 !important;
     color: white !important;
@@ -68,10 +84,12 @@ div[data-baseweb="slider"] > div {
     font-weight: 600;
     border: 1px solid #CC5B5B !important;
     padding: 0.45rem 0.8rem;
+    font-size: 16px !important;
 }
 .stButton > button:hover {
     background-color: #CC5B5B !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -90,8 +108,9 @@ col1, col_mid, col2 = st.columns([0.6, 0.6, 3.0])
 # 🟦 LEFT COLUMN — INPUT
 # ============================================================
 with col1:
-
     soft_tab("Input", "📥")
+
+    st.markdown("<div class='large-io'>Enter or edit your returns:</div>", unsafe_allow_html=True)
 
     default_df = pd.DataFrame({
         "X": [6.6, 5.6, -9.0, 12.6, 14.0],
@@ -105,34 +124,34 @@ with col1:
         st.stop()
 
     df = df.astype(float) / 100
+
+    st.markdown("<br>", unsafe_allow_html=True)
     weight_x = st.slider("Weight in Asset X (wₓ)", 0.0, 1.0, 0.5, 0.05)
     weight_y = 1 - weight_x
 
     calculate = st.button("Calculate")
 
 # ============================================================
-# 🟨 MIDDLE COLUMN — OUTPUT
+# 🟨 MIDDLE COLUMN — OUTPUT BOX
 # ============================================================
 with col_mid:
     soft_tab("Output", "📊")
 
 # ============================================================
-# 🟥 RIGHT COLUMN — GRAPH + OUTPUT
+# 🟥 RIGHT COLUMN — GRAPH + CALCULATIONS
 # ============================================================
 if calculate:
 
-    # Stats
     mean_x, mean_y = df.mean()
     sd_x, sd_y = df.std(ddof=0)
     corr = df["X"].corr(df["Y"])
-
-    # Portfolio outputs
     port_return = weight_x * mean_x + weight_y * mean_y
+
     port_var = (weight_x**2 * sd_x**2) + (weight_y**2 * sd_y**2) \
                + (2 * weight_x * weight_y * sd_x * sd_y * corr)
     port_sd = np.sqrt(port_var)
 
-    # ================= OUTPUT TEXT IN CENTER COLUMN (NEW LINE FORMAT) ================= #
+    # ================= OUTPUT TEXT ================= #
     with col_mid:
         st.markdown(f"<div class='output-line'>Correlation: {corr:.2f}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='output-line'>Mean X: {mean_x*100:.2f}%</div>", unsafe_allow_html=True)
@@ -142,9 +161,8 @@ if calculate:
         st.markdown(f"<div class='output-line'>Portfolio Return: {port_return*100:.2f}%</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='output-line'>Portfolio Risk: {port_sd*100:.2f}%</div>", unsafe_allow_html=True)
 
-    # ================= PLOT IN RIGHT COLUMN ================= #
+    # ================= GRAPH ================= #
     with col2:
-
         soft_tab("Efficient Frontier", "📈")
 
         w = np.linspace(0, 1, 50)
@@ -162,9 +180,8 @@ if calculate:
         ax.scatter(port_sd*100, port_return*100, color="#F5796C", s=45)
 
         ax.set_facecolor("#FFFFFF")
-        ax.set_xlabel("Risk (Std Dev %)", fontsize=9)
-        ax.set_ylabel("Expected Return (%)", fontsize=9)
-        ax.tick_params(axis='both', labelsize=8)
+        ax.set_xlabel("Risk (Std Dev %)")
+        ax.set_ylabel("Expected Return (%)")
 
         st.pyplot(fig)
 
